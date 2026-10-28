@@ -100,9 +100,9 @@ ol.ex .demo{display:inline-block;margin-top:2px;font-size:.85rem;font-weight:600
 .sheet p{margin:0;color:var(--muted)}
 .yt{display:block;text-align:center;font:700 1.15rem var(--display);letter-spacing:.04em;text-transform:uppercase;text-decoration:none;color:var(--accent-ink);background:var(--accent);border-radius:12px;padding:13px}
 .wrap.withtabs{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
-.tabs{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface);border-top:1px solid var(--line);
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);
   padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(0px,env(safe-area-inset-left,0px));padding-right:max(0px,env(safe-area-inset-right,0px))}
-.tabs button{font:600 1.05rem var(--display);letter-spacing:.06em;text-transform:uppercase;background:transparent;border:0;color:var(--muted);padding:14px 4px;cursor:pointer;border-top:3px solid transparent}
+.tabs button{font:600 1rem var(--display);letter-spacing:.05em;text-transform:uppercase;background:transparent;border:0;color:var(--muted);padding:14px 4px;cursor:pointer;border-top:3px solid transparent}
 .tabs button[aria-current="page"]{color:var(--accent);border-top-color:var(--accent)}
 .f2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fl{display:flex;flex-direction:column;gap:4px;font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;min-width:0}
@@ -137,6 +137,26 @@ table.wk td.empty{white-space:normal;text-align:left}
 .btnline{display:flex;gap:8px;flex-wrap:wrap}
 .btnline button,.btnline label{font:600 .95rem var(--body);background:transparent;border:1.5px solid var(--line);color:var(--ink);border-radius:10px;padding:9px 14px;cursor:pointer}
 .ok{color:var(--rest);font-weight:600}
+.shop{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.shop li{display:grid;grid-template-columns:30px 1fr 112px;gap:8px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.shop li:first-child{border-top:0}
+.shop input[type=checkbox]{width:22px;height:22px;accent-color:var(--rest)}
+.shop .it{min-width:0}
+.shop .it b{display:block;font-weight:600}
+.shop .it span{font-size:.88rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.shop li.got .it b{text-decoration:line-through;color:var(--muted)}
+.shop .need{color:var(--accent);font-weight:700}
+.shop .hv{display:flex;align-items:center;gap:4px;font-size:.8rem;color:var(--muted)}
+.shop .hv input{width:100%;min-width:0;font:400 1rem var(--body);color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:8px;padding:6px 6px;text-align:right}
+.cat{font:600 1rem var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:6px 0 0}
+.menus{width:100%;border-collapse:collapse;font-size:.9rem}
+.menus td,.menus th{padding:7px 4px;border-top:1px solid var(--line);vertical-align:top;text-align:left}
+.menus th{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+details summary{cursor:pointer;font-weight:600;color:var(--accent)}
+.sharebar{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sharebar button{font:700 1.1rem var(--display);letter-spacing:.04em;text-transform:uppercase;border-radius:12px;padding:13px 8px;cursor:pointer;border:1.5px solid var(--accent);background:var(--accent);color:var(--accent-ink)}
+.sharebar button.sec{background:transparent;color:var(--accent)}
+textarea.out{font:400 .92rem/1.4 ui-monospace,Menlo,Consolas,monospace;width:100%;min-height:180px;background:var(--bg);color:var(--ink);border:1.5px solid var(--line);border-radius:10px;padding:10px}
 .fin{display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center}
 @media (prefers-reduced-motion: reduce){.prog i{transition:none}.pill.listen i{animation:none}}
 </style>
@@ -216,10 +236,30 @@ table.wk td.empty{white-space:normal;text-align:left}
   </section>
 </div>
 
+<div class="wrap withtabs" id="courses" hidden>
+  <div class="head"><h1>Courses</h1></div>
+  <section class="panel" aria-label="Semaine de menus">
+    <div class="row"><span class="lbl">Menus</span><div class="seg" id="cWeek"></div></div>
+    <div class="row"><span class="lbl">Personnes</span><div class="seg" id="cPers"></div></div>
+    <p class="recap" id="cRecap"></p>
+    <details><summary>Voir les menus de la semaine</summary><div class="tblwrap"><table class="menus" id="cMenus"></table></div></details>
+  </section>
+  <p class="note">Coche ce que tu as déjà en quantité suffisante, ou indique la quantité que tu as : la liste calcule le reste à acheter.</p>
+  <section class="panel" aria-label="Liste de courses" id="cList"></section>
+  <section class="panel">
+    <label class="fl">À ajouter (hors programme)<textarea id="cExtra" rows="2" placeholder="Ex. couches, lessive, café"></textarea></label>
+    <div class="sharebar"><button type="button" id="cShare">Envoyer la liste</button><button type="button" class="sec" id="cCopy">Copier le texte</button></div>
+    <p class="note ok" id="cMsg" hidden></p>
+    <textarea class="out" id="cOut" readonly aria-label="Liste au format texte"></textarea>
+    <div class="btnline"><button type="button" id="cReset">Nouvelle semaine (tout décocher)</button></div>
+  </section>
+</div>
+
 <nav class="tabs" id="tabs" aria-label="Sections">
   <button type="button" data-v="home" aria-current="page">Séance</button>
   <button type="button" data-v="journal">Journal</button>
   <button type="button" data-v="suivi">Suivi</button>
+  <button type="button" data-v="courses">Courses</button>
 </nav>
 
 <div class="sheet" id="sheet" hidden>
@@ -631,10 +671,88 @@ function renderSuivi(){
 $("bExport").onclick=()=>{const data={app:"circuit",v:1,exporte:new Date().toISOString(),journal,hist,goals};const b=new Blob([JSON.stringify(data,null,1)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="circuit-sauvegarde-"+iso(new Date())+".json";document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);$("ioMsg").textContent="Fichier de sauvegarde créé.";$("ioMsg").hidden=false};
 $("fImport").onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const d=JSON.parse(rd.result);if(d.app!=="circuit")throw 0;journal=Object.assign({},journal,d.journal||{});const seen=new Set(hist.map(h=>h.d));(d.hist||[]).forEach(h=>{if(!seen.has(h.d))hist.push(h)});hist.sort((a,b)=>b.d.localeCompare(a.d));if(d.goals)goals=Object.assign(goals,d.goals);store.set("cpc_journal",journal);store.set("cpc_hist",hist);store.set("cpc_goals",goals);$("ioMsg").textContent="Données importées.";$("ioMsg").hidden=false;renderSuivi();renderHome()}catch(err){$("ioMsg").textContent="Ce fichier n'est pas une sauvegarde de l'appli.";$("ioMsg").hidden=false}};rd.readAsText(f);e.target.value=""};
 
+/* ---------- Courses ---------- */
+const MENUS={
+ 1:[["Lundi","Poulet rôti, poireaux vinaigrette, pommes de terre vapeur","Velouté de potiron, omelette aux herbes, pain"],
+    ["Mardi","Boulettes de bœuf 5 %, sauce tomate maison, pâtes","Velouté poireaux-pommes de terre, truite au four"],
+    ["Mercredi","Salade de restes de poulet, chou blanc et carottes râpés, noix","Lentilles du Gers aux carottes et oignons, 2 œufs mollets"],
+    ["Jeudi","Gigot d'agneau sans le gras, chou vert, haricots tarbais","Soupe de légumes, émincé de poulet"],
+    ["Vendredi","Truite, épinards, pommes de terre","Garbure allégée au poulet (sans confit)"],
+    ["Samedi","Magret sans la peau, courge rôtie, polenta","Omelette aux champignons, salade"],
+    ["Dimanche","Poule au pot et ses légumes","Bouillon, fromage blanc aux herbes"]],
+ 2:[["Lundi","Poulet, pois chiches rôtis au piment d'Espelette, chou rouge","Velouté de carottes, 2 œufs durs"],
+    ["Mardi","Daube de bœuf maigre aux carottes, pommes de terre","Soupe de poireaux, truite"],
+    ["Mercredi","Restes de daube","Salade de lentilles, œufs, échalote"],
+    ["Jeudi","Poulet basquaise, pâtes","Soupe de courge, fromage blanc aux herbes"],
+    ["Vendredi","Truite en papillote, poireaux fondus, pommes de terre","Omelette pommes de terre-oignons"],
+    ["Samedi","2 côtelettes d'agneau, haricots tarbais à la tomate","Velouté de chou-fleur, Ossau-Iraty, pain"],
+    ["Dimanche","Poulet rôti, légumes racines rôtis","Bouillon, 2 œufs pochés"]]
+};
+const CATS=["Viandes et poissons","Crèmerie et œufs","Légumes","Fruits et noix","Épicerie","Placard (à vérifier)"];
+const BASE=[ // petits-déjeuners + collations + huile, identiques chaque semaine (1 personne)
+ [1,"Œufs",21,"pc"],[1,"Fromage blanc nature",1050,"g"],[1,"Yaourts de brebis nature",7,"pc"],[4,"Pain de campagne",350,"g"],
+ [3,"Pommes",7,"pc"],[3,"Poires",7,"pc"],[3,"Cerneaux de noix",105,"g"],[4,"Huile de colza",150,"ml"],
+ [5,"Sel de Salies"],[5,"Piment d'Espelette"],[5,"Ail"],[5,"Herbes (persil, thym, laurier)"],[5,"Vinaigre de vin"]];
+const WEEKLIST={
+ 1:[[0,"Poulet (filets et cuisses)",1000,"g"],[0,"Bœuf haché 5 %",180,"g"],[0,"Gigot d'agneau",180,"g"],[0,"Magret de canard",1,"pc"],[0,"Filets de truite",300,"g"],
+    [1,"Œufs",8,"pc"],[1,"Fromage blanc nature",150,"g"],[4,"Pain de campagne",50,"g"],
+    [2,"Poireaux",900,"g"],[2,"Pommes de terre",700,"g"],[2,"Potiron ou courge",700,"g"],[2,"Carottes",650,"g"],[2,"Chou vert",500,"g"],[2,"Chou blanc",150,"g"],[2,"Navets",300,"g"],[2,"Épinards",300,"g"],[2,"Champignons",200,"g"],[2,"Salade",1,"pc"],[2,"Oignons",2,"pc"],
+    [3,"Cerneaux de noix",10,"g"],
+    [4,"Lentilles vertes",60,"g"],[4,"Haricots tarbais secs",120,"g"],[4,"Pâtes",70,"g"],[4,"Polenta (semoule de maïs)",60,"g"],[4,"Sauce tomate maison",1,"bocal"]],
+ 2:[[0,"Poulet (filets et cuisses)",600,"g"],[0,"Bœuf à daube (paleron)",400,"g"],[0,"Côtelettes d'agneau",2,"pc"],[0,"Filets de truite",300,"g"],
+    [1,"Œufs",9,"pc"],[1,"Fromage blanc nature",150,"g"],[1,"Ossau-Iraty",100,"g"],[4,"Pain de campagne",50,"g"],
+    [2,"Carottes",750,"g"],[2,"Poireaux",600,"g"],[2,"Pommes de terre",750,"g"],[2,"Potiron ou courge",400,"g"],[2,"Chou rouge",300,"g"],[2,"Chou-fleur",1,"pc"],[2,"Navets",150,"g"],[2,"Oignons",2,"pc"],[2,"Échalote",1,"pc"],
+    [4,"Lentilles vertes",60,"g"],[4,"Pois chiches secs",60,"g"],[4,"Haricots tarbais secs",60,"g"],[4,"Pâtes",70,"g"],[4,"Tomates en bocal",2,"bocal"],[4,"Poivrons en bocal",1,"bocal"]]
+};
+const slug=t=>t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-");
+function weekItems(n){
+  const m=new Map();[...BASE,...WEEKLIST[n]].forEach(([c,nm,q,u])=>{const id=slug(nm);if(m.has(id)){m.get(id).q+=q||0}else m.set(id,{id,c,nm,q:q==null?null:q,u:u||null})});
+  return [...m.values()];
+}
+let shop=Object.assign({week:1,pers:1,w:{1:{have:{},all:{},extra:""},2:{have:{},all:{},extra:""}}},store.get("cpc_shop",{}));
+const saveShop=()=>store.set("cpc_shop",shop);
+function fmtQ(q,u){if(q==null)return"";if(u==="g"){return q>=1000?nf(q/1000,(q%1000)?1:0)+" kg":Math.round(q)+" g"}if(u==="ml")return q>=1000?nf(q/1000,1)+" l":Math.round(q)+" ml";if(u==="bocal")return Math.ceil(q)+" bocal"+(Math.ceil(q)>1?"x":"");return Math.ceil(q)+""}
+function needOf(it,st){if(st.all[it.id])return 0;if(it.q==null)return null;const tot=it.q*shop.pers;const h=parseFloat(st.have[it.id])||0;let n=Math.max(0,tot-h);if(it.u==="g"&&n>0)n=Math.ceil(n/50)*50;return n}
+function renderCourses(){
+  const st=shop.w[shop.week];
+  seg($("cWeek"),[[1,"Semaine 1"],[2,"Semaine 2"]],shop.week,v=>{shop.week=+v;saveShop();renderCourses()});
+  seg($("cPers"),[[1,"1"],[2,"2"],[3,"3"]],shop.pers,v=>{shop.pers=+v;saveShop();renderCourses()});
+  $("cRecap").textContent="Quantités pour "+(shop.pers>1?shop.pers+" personnes":"toi seul")+", petits-déjeuners et collations compris. Tu alternes semaine 1 et semaine 2 sur le mois.";
+  $("cMenus").innerHTML=`<tr><th>Jour</th><th>Déjeuner</th><th>Dîner</th></tr>`+MENUS[shop.week].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+  const items=weekItems(shop.week);let h="";
+  CATS.forEach((cat,ci)=>{const L=items.filter(i=>i.c===ci);if(!L.length)return;
+    h+=`<h3 class="cat">${cat}</h3><ul class="shop">`+L.map(it=>{const n=needOf(it,st),got=n===0;
+      const qtxt=it.q==null?"":`Prévu ${fmtQ(it.q*shop.pers,it.u)}${got?"":" · à acheter <span class=\"need\">"+fmtQ(n,it.u)+"</span>"}`;
+      const unit=it.u==="g"?"g":it.u==="ml"?"ml":it.u==="bocal"?"bc":"pc";
+      return `<li class="${got?"got":""}"><input type="checkbox" data-id="${it.id}" ${st.all[it.id]?"checked":""} aria-label="J'ai déjà : ${it.nm}"><span class="it"><b>${it.nm}</b><span>${qtxt||(st.all[it.id]?"Vérifié":"À vérifier")}</span></span>${it.q==null?"<span></span>":`<label class="hv">J'ai<input type="number" inputmode="decimal" min="0" data-h="${it.id}" value="${st.have[it.id]??""}" placeholder="0">${unit}</label>`}</li>`}).join("")+`</ul>`});
+  $("cList").innerHTML=h;
+  $("cList").querySelectorAll("input[type=checkbox]").forEach(cb=>cb.onchange=()=>{st.all[cb.dataset.id]=cb.checked;if(!cb.checked)delete st.all[cb.dataset.id];saveShop();renderCourses()});
+  $("cList").querySelectorAll("input[data-h]").forEach(inp=>inp.onchange=()=>{const v=String(inp.value).replace(",",".");if(v===""||!(parseFloat(v)>0))delete st.have[inp.dataset.h];else st.have[inp.dataset.h]=parseFloat(v);saveShop();renderCourses()});
+  if(document.activeElement!==$("cExtra"))$("cExtra").value=st.extra||"";
+  $("cOut").value=shopText();$("cMsg").hidden=true;
+}
+function shopText(){
+  const st=shop.w[shop.week],items=weekItems(shop.week);
+  let t=`Courses, semaine de menus ${shop.week}${shop.pers>1?" ("+shop.pers+" pers.)":""}\n`;let any=false;
+  CATS.forEach((cat,ci)=>{const L=items.filter(i=>i.c===ci).map(it=>({it,n:needOf(it,st)})).filter(x=>x.n!==0);if(!L.length)return;any=true;
+    t+=`\n${cat==="Placard (à vérifier)"?"Si besoin":cat}\n`+L.map(({it,n})=>`- ${it.nm}${n==null?"":" : "+fmtQ(n,it.u)}`).join("\n")+"\n"});
+  const ex=(st.extra||"").split(/\n|,/).map(x=>x.trim()).filter(Boolean);
+  if(ex.length){any=true;t+=`\nÀ ajouter\n`+ex.map(x=>"- "+x).join("\n")+"\n"}
+  if(!any)t+="\nRien à acheter, tout est déjà là.\n";
+  return t.trim();
+}
+$("cExtra").oninput=()=>{shop.w[shop.week].extra=$("cExtra").value;saveShop();$("cOut").value=shopText()};
+function cMsg(m){$("cMsg").textContent=m;$("cMsg").hidden=false}
+async function copyText(){const t=shopText();try{await navigator.clipboard.writeText(t);cMsg("Liste copiée : colle-la dans ton message.")}catch(e){$("cOut").focus();$("cOut").select();cMsg("Texte sélectionné : utilise Copier.")}}
+$("cCopy").onclick=copyText;
+$("cShare").onclick=async()=>{const t=shopText();if(navigator.share){try{await navigator.share({title:"Liste de courses",text:t});return}catch(e){if(e&&e.name==="AbortError")return}}copyText()};
+let resetArm=0;
+$("cReset").onclick=()=>{const now=Date.now();if(now-resetArm<3000){shop.w[shop.week]={have:{},all:{},extra:""};saveShop();renderCourses();cMsg("Liste remise à zéro.");$("cReset").textContent="Nouvelle semaine (tout décocher)"}else{resetArm=now;$("cReset").textContent="Appuie encore pour confirmer";setTimeout(()=>$("cReset").textContent="Nouvelle semaine (tout décocher)",3000)}};
+
 /* ---------- Navigation ---------- */
-const VIEWS=["home","journal","suivi"];
+const VIEWS=["home","journal","suivi","courses"];
 function show(v){if(!VIEWS.includes(v))v="home";VIEWS.forEach(x=>$(x).hidden=x!==v);document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-current",b.dataset.v===v?"page":"false"));
-  if(v==="journal"){jDay=iso(new Date());loadDay();renderJList()}if(v==="suivi")renderSuivi();if(v==="home")renderHome();window.scrollTo(0,0)}
+  if(v==="journal"){jDay=iso(new Date());loadDay();renderJList()}if(v==="suivi")renderSuivi();if(v==="courses")renderCourses();if(v==="home")renderHome();window.scrollTo(0,0)}
 document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{const h=b.dataset.v==="home"?"":"#"+b.dataset.v;if(location.hash!==h){history.replaceState(null,"",location.pathname+h)}show(b.dataset.v)});
 window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
 show(location.hash.slice(1));
