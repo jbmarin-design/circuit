@@ -81,6 +81,24 @@ ol.ex .q{font-family:var(--display);font-weight:600;font-size:1.15rem;font-varia
 .pill.listen i{background:var(--accent);animation:pulse 1.2s infinite}
 @keyframes pulse{50%{opacity:.3}}
 .rmsg{margin:8px 0 0;font-size:.9rem;color:var(--accent)}
+.fig{width:100%;height:100%;display:block}
+.fig .gnd{stroke:var(--line);stroke-width:2}
+.fig .prop{fill:none;stroke:var(--muted);stroke-width:2;stroke-linejoin:round}
+.fig .near{fill:none;stroke:var(--ink);stroke-width:4.2;stroke-linecap:round;stroke-linejoin:round}
+.fig .far{fill:none;stroke:var(--ink);stroke-width:4.2;stroke-linecap:round;stroke-linejoin:round;opacity:.35}
+.fig .hd{fill:var(--ink)}
+.rfig{width:min(78vw,300px);aspect-ratio:6/5;max-width:100%;max-height:30vh}
+ol.ex li.clk{cursor:pointer}
+ol.ex .demo{display:inline-block;margin-top:2px;font-size:.85rem;font-weight:600;color:var(--accent)}
+.sheet{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheet-in{background:var(--surface);color:var(--ink);width:100%;max-width:560px;border-radius:18px 18px 0 0;display:flex;flex-direction:column;gap:10px;
+  padding-top:16px;padding-bottom:max(20px,env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.sheet-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sheet-top h3{font:700 1.8rem/1.05 var(--display);margin:0}
+.sheet-top button{font:600 1rem var(--body);background:transparent;border:1.5px solid var(--line);color:var(--ink);border-radius:999px;padding:6px 14px;cursor:pointer}
+.sfig{width:100%;aspect-ratio:6/5;max-height:46vh;background:var(--bg);border-radius:12px}
+.sheet p{margin:0;color:var(--muted)}
+.yt{display:block;text-align:center;font:700 1.15rem var(--display);letter-spacing:.04em;text-transform:uppercase;text-decoration:none;color:var(--accent-ink);background:var(--accent);border-radius:12px;padding:13px}
 .fin{display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center}
 @media (prefers-reduced-motion: reduce){.prog i{transition:none}.pill.listen i{animation:none}}
 </style>
@@ -119,6 +137,16 @@ ol.ex .q{font-family:var(--display);font-weight:600;font-size:1.15rem;font-varia
   </section>
 </div>
 
+<div class="sheet" id="sheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="sheetName">
+    <div class="sheet-top"><h3 id="sheetName">Squat</h3><button id="sheetClose" type="button">Fermer</button></div>
+    <div class="sfig" id="sheetFig"></div>
+    <p id="sheetCue"></p>
+    <p id="sheetQty"></p>
+    <a class="yt" id="sheetYt" href="https://www.youtube.com" target="_blank" rel="noopener">Vidéos sur YouTube</a>
+  </div>
+</div>
+
 <div class="run" id="run" hidden>
   <div>
     <div class="rtop"><span id="rTour">Tour 1/2</span><span class="pill" id="rMic" hidden><i></i><span id="rMicTxt">Micro</span></span><span id="rClock">0:00</span></div>
@@ -127,6 +155,7 @@ ol.ex .q{font-family:var(--display);font-weight:600;font-size:1.15rem;font-varia
   </div>
   <div class="rmid" id="rMid">
     <div class="phase" id="rPhase">Prêt</div>
+    <div class="rfig" id="rFig" hidden></div>
     <h3 class="exname" id="rName">Squat</h3>
     <div class="big" id="rBig">10</div>
     <div class="cue2" id="rCue"></div>
@@ -175,7 +204,8 @@ function renderHome(){
   const w=WEEKS[cfg.week];
   $("recap").innerHTML=`<b>${tours()} tours</b> · <b>${w.repsTxt}</b> répétitions · gainage <b>${w.hold} s</b> · environ <b>${estMin()} min</b>`;
   $("exTitle").textContent="Séance "+cfg.sess;
-  $("exList").innerHTML=SESS[cfg.sess].map((e,i)=>`<li><span class="n">${i+1}</span><span class="nm">${e.nm}<span class="cue">${e.cue}</span></span><span class="q">${qty(e,w)}</span></li>`).join("");
+  $("exList").innerHTML=SESS[cfg.sess].map((e,i)=>`<li class="clk" tabindex="0" data-i="${i}"><span class="n">${i+1}</span><span class="nm">${e.nm}<span class="cue">${e.cue}</span><span class="demo">Voir la démo</span></span><span class="q">${qty(e,w)}</span></li>`).join("");
+  $("exList").querySelectorAll("li").forEach(li=>{const go=()=>openSheet(SESS[cfg.sess][+li.dataset.i]);li.onclick=go;li.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}}});
   ["Voice","Count","Warm","Bonus","Mic"].forEach(k=>$("opt"+k).checked=!!cfg[k.toLowerCase()]);
   const wk=weekKey(new Date()),n=hist.filter(h=>weekKey(new Date(h.d))===wk).length;
   $("dots").innerHTML=[0,1,2].map(i=>`<span class="${i<n?"on":""}"></span>`).join("");
@@ -194,6 +224,62 @@ function pickVoice(){try{const v=speechSynthesis.getVoices();frVoice=v.find(x=>/
 if("speechSynthesis" in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
 function say(t,cut){if(!cfg.voice||!("speechSynthesis" in window))return;try{if(cut)speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="fr-FR";if(frVoice)u.voice=frVoice;u.rate=1.05;u.onend=u.onerror=()=>{lastSpeechEnd=performance.now()};speechSynthesis.speak(u)}catch(e){}}
 function beep(f=880,d=.12){try{if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f;o.connect(g);g.connect(actx.destination);const t=actx.currentTime;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.3,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.start(t);o.stop(t+d+.02)}catch(e){}}
+
+/* ---------- Démonstrations animées ---------- */
+const ST={h:[60,17],s:[60,28],p:[60,54],k1:[60,72],a1:[60,90],e1:[60,41],w1:[61,54]};
+const PROP={
+  table:'<path d="M80 66H114M84 66V92M110 66V92"/>',
+  step:'<path d="M64 92V82H102V92"/>'
+};
+const ANIM={
+ "Squat":{per:3,A:{...ST,e1:[68,32],w1:[78,31]},B:{h:[66,36],s:[61,45],p:[46,64],k1:[64,70],a1:[60,90],e1:[70,46],w1:[80,46]},yt:"squat poids du corps technique débutant"},
+ "Pompes inclinées":{per:3,prop:"table",A:{h:[89,44],s:[81,50],p:[55,68],k1:[40,79],a1:[26,90],e1:[82,58],w1:[83,66]},B:{h:[86,54],s:[78,59],p:[53,73],k1:[39,81],a1:[26,90],e1:[72,63],w1:[83,66]},yt:"pompes inclinées sur table débutant"},
+ "Fentes arrière":{per:2.5,A:{...ST,e1:[54,46],w1:[58,54]},B:{h:[57,33],s:[57,44],p:[55,68],k1:[72,70],a1:[70,90],k2:[46,87],a2:[30,88],e1:[51,56],w1:[56,64]},yt:"fentes arrière technique débutant"},
+ "Pont fessier":{per:2.5,A:{h:[18,84],s:[28,88],p:[54,88],k1:[68,72],a1:[78,90],e1:[40,90],w1:[50,90]},B:{h:[18,84],s:[28,88],p:[52,73],k1:[70,70],a1:[78,90],e1:[40,90],w1:[50,90]},yt:"pont fessier au sol technique"},
+ "Montées de genoux":{per:1.6,A:{...ST,k1:[72,62],a1:[70,80],k2:[60,72],a2:[60,90],e1:[54,40],w1:[52,50],e2:[66,40],w2:[72,34]},B:{...ST,k1:[60,72],a1:[60,90],k2:[72,62],a2:[70,80],e1:[66,40],w1:[72,34],e2:[54,40],w2:[52,50]},yt:"montées de genoux sur place exercice"},
+ "Planche":{per:4,A:{h:[90,73],s:[80,77],p:[52,81],k1:[37,85],a1:[22,89],e1:[80,90],w1:[94,90]},B:{h:[90,73],s:[80,77],p:[52,79.5],k1:[37,84.5],a1:[22,89],e1:[80,90],w1:[94,90]},yt:"planche gainage avant-bras technique"},
+ "Squat sumo":{per:3,front:1,A:{h:[60,17],s:[60,29],p:[60,54],k1:[49,72],a1:[44,90],k2:[71,72],a2:[76,90],e1:[51,42],w1:[59,38],e2:[69,42],w2:[61,38]},B:{h:[60,33],s:[60,45],p:[60,68],k1:[43,72],a1:[44,90],k2:[77,72],a2:[76,90],e1:[51,57],w1:[59,53],e2:[69,57],w2:[61,53]},yt:"squat sumo poids du corps technique"},
+ "Montées sur marche":{per:2.5,prop:"step",A:{h:[56,14],s:[56,26],p:[56,52],k1:[70,64],a1:[74,82],k2:[54,71],a2:[54,90],e1:[56,39],w1:[57,52]},B:{h:[73,11],s:[72,22],p:[72,46],k1:[73,64],a1:[74,82],k2:[68,64],a2:[62,78],e1:[72,34],w1:[73,46]},yt:"montée sur marche step up exercice"},
+ "Pompes sur les genoux":{per:3,A:{h:[90,62],s:[82,68],p:[56,80],k1:[40,90],a1:[26,82],e1:[83,79],w1:[84,90]},B:{h:[88,77],s:[80,80],p:[56,84],k1:[40,90],a1:[26,82],e1:[72,80],w1:[84,90]},yt:"pompes sur les genoux technique débutant"},
+ "Superman":{per:3,A:{h:[96,85],s:[84,88],p:[58,88],k1:[42,89],a1:[26,89],e1:[96,89],w1:[108,89]},B:{h:[97,80],s:[84,86],p:[58,88],k1:[42,87],a1:[26,81],e1:[96,82],w1:[108,77]},yt:"exercice superman au sol lombaires"},
+ "Mountain climbers lents":{per:2.4,A:{h:[90,64],s:[82,70],p:[56,76],k1:[68,82],a1:[60,88],k2:[42,82],a2:[28,88],e1:[83,80],w1:[84,90]},B:{h:[90,64],s:[82,70],p:[56,76],k1:[42,82],a1:[28,88],k2:[68,82],a2:[60,88],e1:[83,80],w1:[84,90]},yt:"mountain climbers lents débutant"},
+ "Gainage latéral":{per:4,A:{h:[22,68],s:[30,76],p:[62,80],k1:[80,85],a1:[98,89],e1:[30,90],w1:[42,90],e2:[42,72],w2:[48,78]},B:{h:[22,68],s:[30,76],p:[62,83],k1:[80,86.5],a1:[98,89],e1:[30,90],w1:[42,90],e2:[42,72],w2:[48,78]},yt:"gainage latéral avant-bras technique"}
+};
+function fillPose(q){return {...q,k2:q.k2||q.k1,a2:q.a2||q.a1,e2:q.e2||q.e1,w2:q.w2||q.w1}}
+Object.values(ANIM).forEach(a=>{a.A=fillPose(a.A);a.B=fillPose(a.B)});
+const RM=(()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}})();
+const figs=new Set();let figRaf=null;
+function figLoop(t){figs.forEach(f=>f.draw(t));figRaf=figs.size?requestAnimationFrame(figLoop):null}
+function figMount(box,name){
+  const a=ANIM[name];box.innerHTML="";if(!a)return{stop(){}};
+  const NS="http://www.w3.org/2000/svg",svg=document.createElementNS(NS,"svg");
+  svg.setAttribute("viewBox","0 0 120 100");svg.setAttribute("class","fig");svg.setAttribute("role","img");svg.setAttribute("aria-label","Démonstration : "+name);
+  svg.innerHTML=`<line class="gnd" x1="4" y1="92.5" x2="116" y2="92.5"/><g class="prop">${a.prop?PROP[a.prop]:""}</g><path class="far"/><path class="near"/><circle class="hd" r="6"/>`;
+  box.appendChild(svg);
+  const far=svg.querySelector(".far"),near=svg.querySelector(".near"),hd=svg.querySelector(".hd");
+  if(a.front)far.style.opacity="1";
+  const L=(u,v,f)=>[u[0]+(v[0]-u[0])*f,u[1]+(v[1]-u[1])*f],pt=q=>q[0].toFixed(1)+" "+q[1].toFixed(1);
+  const f={draw(t){
+    const ph=RM?0.5:((t/1000)%a.per)/a.per,k=RM?1:(1-Math.cos(2*Math.PI*ph))/2,P={};
+    for(const j in a.A)P[j]=L(a.A[j],a.B[j],k);
+    far.setAttribute("d",`M${pt(P.p)}L${pt(P.k2)}L${pt(P.a2)}M${pt(P.s)}L${pt(P.e2)}L${pt(P.w2)}`);
+    near.setAttribute("d",`M${pt(P.s)}L${pt(P.p)}L${pt(P.k1)}L${pt(P.a1)}M${pt(P.s)}L${pt(P.e1)}L${pt(P.w1)}`);
+    hd.setAttribute("cx",P.h[0].toFixed(1));hd.setAttribute("cy",P.h[1].toFixed(1));
+  },stop(){figs.delete(f);box.innerHTML=""}};
+  f.draw(performance.now());figs.add(f);if(!figRaf)figRaf=requestAnimationFrame(figLoop);
+  return f;
+}
+let sheetFig=null,runFig=null,runFigName=null;
+function openSheet(e){
+  const a=ANIM[e.nm],w=WEEKS[cfg.week];
+  $("sheetName").textContent=e.nm;$("sheetCue").textContent=e.cue;$("sheetQty").textContent="Semaine "+cfg.week+" : "+qty(e,w)+".";
+  $("sheetYt").href="https://www.youtube.com/results?search_query="+encodeURIComponent(a?a.yt:e.nm+" exercice");
+  $("sheet").hidden=false;if(sheetFig)sheetFig.stop();sheetFig=figMount($("sheetFig"),e.nm);$("sheetClose").focus();
+}
+function closeSheet(){$("sheet").hidden=true;if(sheetFig){sheetFig.stop();sheetFig=null}}
+$("sheetClose").onclick=closeSheet;
+$("sheet").addEventListener("click",e=>{if(e.target===$("sheet"))closeSheet()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("sheet").hidden)closeSheet()});
 
 /* ---------- Voice commands ---------- */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -314,12 +400,14 @@ function render(){
     else if(cfg.count)big=`${Math.min(st.lastCount,s.reps)}<small>/${s.reps}</small>`;
     else big=`${s.reps}<small>${s.ex.leg?" / jambe":" rép."}</small>`;
     if(s.ex.leg&&!leadOn)next="Compte par jambe";}
+  let figName=null;if(s.k==="reps"||s.k==="hold")figName=s.nm;else if(s.k==="rest"){const n=nextWork(si+1);figName=n?n.nm:null}
+  if(figName!==runFigName){runFigName=figName;if(runFig){runFig.stop();runFig=null}$("rFig").hidden=!figName;if(figName)runFig=figMount($("rFig"),figName)}
   $("rPhase").textContent=phase;$("rName").textContent=name;$("rBig").innerHTML=big;$("rCue").textContent=cue;$("rNext").innerHTML=next;
   $("bDone").textContent=s.k==="reps"?"Fait":s.k==="rest"?"Je suis prêt":"Terminé";
   $("bPause").textContent=paused?"Reprendre":"Pause";
 }
 function finish(){
-  clearInterval(timer);timer=null;
+  clearInterval(timer);timer=null;if(runFig){runFig.stop();runFig=null}runFigName=null;$("rFig").hidden=true;
   const done={d:new Date().toISOString(),s:cfg.sess,w:cfg.week,t:tours(),dur:Math.round(totalMs/1000)};
   hist.unshift(done);hist=hist.slice(0,60);store.set("cpc_hist",hist);
   if(cfg.sess==="A")cfg.sess="B";else cfg.sess="A";save();
@@ -332,7 +420,7 @@ function finish(){
   const b=document.createElement("button");b.className="go";b.textContent="Retour";b.style.marginTop="12px";b.onclick=closeRun;$("rMid").appendChild(b);b.id="bBack";
   micStop();release();
 }
-function closeRun(){micStop();clearInterval(timer);timer=null;st=null;try{speechSynthesis.cancel()}catch(e){}release();const b=$("bBack");if(b)b.remove();$("rBot").hidden=false;$("run").hidden=true;$("home").hidden=false;renderHome();window.scrollTo(0,0)}
+function closeRun(){micStop();if(runFig){runFig.stop();runFig=null}runFigName=null;$("rFig").hidden=true;clearInterval(timer);timer=null;st=null;try{speechSynthesis.cancel()}catch(e){}release();const b=$("bBack");if(b)b.remove();$("rBot").hidden=false;$("run").hidden=true;$("home").hidden=false;renderHome();window.scrollTo(0,0)}
 function release(){try{wake&&wake.release()}catch(e){}wake=null}
 $("btnGo").onclick=start;
 $("bPause").onclick=()=>{paused=!paused;if(paused){try{speechSynthesis.cancel()}catch(e){}say("Pause.")}else say("On reprend.");render()};
