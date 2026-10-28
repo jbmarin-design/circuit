@@ -179,6 +179,8 @@ textarea.out{font:400 .92rem/1.4 ui-monospace,Menlo,Consolas,monospace;width:100
 .dsbody .acts{display:flex;flex-direction:column;gap:8px}
 .dsbody .acts button,.alert button{font:700 1.05rem var(--display);letter-spacing:.04em;text-transform:uppercase;border-radius:12px;padding:12px 10px;cursor:pointer;border:1.5px solid var(--ink);background:transparent;color:var(--ink);text-align:center}
 .dsbody .acts button.pri,.alert button.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.dsbody .kc{margin:0;font:700 1.6rem var(--display);color:var(--ink)}.dsbody .kc .st{font:400 .9rem var(--body)}
+.dsbody .days button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .dsbody .days{display:flex;flex-wrap:wrap;gap:6px}
 .dsbody .days button{font:600 .95rem var(--body);border-radius:999px;padding:8px 12px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
 .alert .btns{display:flex;gap:8px;flex-wrap:wrap}.alert .btns button{flex:1;min-width:130px;padding:10px 8px;font-size:.95rem}
@@ -358,7 +360,22 @@ const $=id=>document.getElementById(id);
 const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 SESS.X=[{...SESS.A[0],hold:1,timed:1,sec:40},{...SESS.A[1],hold:1,timed:1,sec:40},{...SESS.A[4],hold:1,timed:1,sec:40},{...SESS.A[5],timed:1,sec:30}];
 const isMuscle=h=>h&&["A","B","X"].includes(h.s);
-const SNAME={A:"Séance A",B:"Séance B",X:"Séance express",velo:"Vélo",balade:"Balade",Vélo:"Vélo",Balade:"Balade"};
+const ACT={
+ A:{nm:"Séance A",sh:"A",met:5},B:{nm:"Séance B",sh:"B",met:5},X:{nm:"Séance express",sh:"Exp.",met:6},
+ "Vélo":{nm:"Vélo",sh:"Vélo",lv:[["Balade",4],["Modéré",6.8],["Sportif",8.5]],def:1,min:45},
+ "Balade":{nm:"Marche",sh:"Mar.",lv:[["Tranquille",3],["Poussette",3.5],["Rapide",4.3]],def:1,min:30},
+ "Course":{nm:"Course à pied",sh:"Cour.",lv:[["Lente",7],["Moyenne",9],["Rapide",11]],def:0,min:30},
+ "Paddle":{nm:"Paddle",sh:"Pad.",lv:[["Balade",4],["Soutenu",6]],def:0,min:60},
+ "Foot":{nm:"Football",sh:"Foot",lv:[["Loisir",7],["Match",9]],def:0,min:60},
+ "Peche":{nm:"Pêche",sh:"Pêche",met:3,min:120},
+ "Api":{nm:"Apiculture",sh:"Api.",met:4,min:120},
+ "Magasin":{nm:"Courses en magasin",sh:"Mag.",met:2.3,min:45}
+};
+const ACT_ORDER=["A","B","X","Vélo","Balade","Course","Paddle","Foot","Peche","Api","Magasin"];
+const SNAME=new Proxy({},{get:(o,k)=>k==="velo"?"Vélo":k==="balade"?"Marche":(ACT[k]?ACT[k].nm:undefined)});
+function weightAt(d){const k=iso(new Date(d));let w=null;try{Object.keys(journal).sort().forEach(j=>{if(j<=k&&journal[j].w!=null)w=journal[j].w})}catch(e){}return w||(typeof goals!=="undefined"?goals.start:95)}
+function metOf(h){const a=ACT[h.s];if(!a)return 4;return a.lv?a.lv[h.int!=null?h.int:a.def][1]:a.met}
+function kcalOf(h){return Math.round(metOf(h)*weightAt(h.d)*(h.dur||0)/3600)}
 let cfg=Object.assign({week:1,sess:"A",voice:true,count:true,warm:true,bonus:false,mic:false},store.get("cpc_cfg",{}));
 let hist=store.get("cpc_hist",[]);
 
@@ -379,7 +396,7 @@ function renderHome(){
   const wk=weekKey(new Date()),n=hist.filter(h=>isMuscle(h)&&weekKey(new Date(h.d))===wk).length;
   $("dots").innerHTML=[0,1,2].map(i=>`<span class="${i<n?"on":""}"></span>`).join("");
   $("weektxt").textContent=`${n}/3 cette semaine`;
-  $("hist").innerHTML=hist.length?hist.slice(0,12).map(h=>{const d=new Date(h.d);return `<li><span>${d.toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"})}</span><span><span class="tag">${SNAME[h.s]||h.s}</span>${isMuscle(h)&&h.s!=="X"?" · sem. "+h.w:""}${h.m?" · noté":""}</span><span>${fmt(h.dur)}</span></li>`}).join(""):`<p class="empty">Aucune séance enregistrée. La première apparaîtra ici.</p>`;
+  $("hist").innerHTML=hist.length?hist.slice(0,12).map(h=>{const d=new Date(h.d);return `<li><span>${d.toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"})}</span><span><span class="tag">${SNAME[h.s]||h.s}</span>${isMuscle(h)&&h.s!=="X"?" · sem. "+h.w:""}${h.m?" · noté":""}</span><span>${Math.round(h.dur/60)} min · ${kcalOf(h)} kcal</span></li>`}).join(""):`<p class="empty">Aucune séance enregistrée. La première apparaîtra ici.</p>`;
 }
 function estMin(){let s=0;const w=WEEKS[cfg.week];if(cfg.sess==="X")return Math.round(((cfg.warm?120:0)+3*4*(40+4)+3*4*20+2*40)/60);if(cfg.warm)s+=300;const T=tours();SESS[cfg.sess].forEach(e=>{s+=T*(e.hold?w.hold*(e.sides?2:1)+(e.sides?8:0)+4:w.reps*e.t+4)});s+=T*6*20+(T-1)*40;return Math.round(s/60)}
 function weekKey(d){const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x.toDateString()}
@@ -579,7 +596,7 @@ function render(){
 function finish(){
   clearInterval(timer);timer=null;if(runFig){runFig.stop();runFig=null}runFigName=null;$("rFig").hidden=true;
   const done={d:new Date().toISOString(),s:cfg.sess,w:cfg.week,t:tours(),dur:Math.round(totalMs/1000)};
-  hist.unshift(done);hist=hist.slice(0,60);store.set("cpc_hist",hist);
+  hist.unshift(done);hist=hist.slice(0,2000);store.set("cpc_hist",hist);
   if(cfg.sess==="A")cfg.sess="B";else if(cfg.sess==="B")cfg.sess="A";save();
   say(`Séance terminée en ${Math.round(done.dur/60)} minutes. Bien joué. Pense à boire de l'eau et à t'étirer.`,true);
   const run=$("run");run.classList.remove("rest","work");
@@ -681,12 +698,12 @@ function renderSuivi(){
    g+=`<line class="goal" x1="${L2}" x2="${W2-4}" y1="${Y(goals.steps)}" y2="${Y(goals.steps)}"/><text class="goaltx" x="${W2-6}" y="${Y(goals.steps)-4}" text-anchor="end">objectif ${goals.steps.toLocaleString("fr-FR")}</text>`;
    $("sChart").innerHTML=days.some(d=>d.v!=null)?svgEl(W2,H2,g):`<p class="empty">Saisis tes pas le soir dans le Journal pour voir tes 14 derniers jours ici.</p>`}
   // weekly table
-  const wk={};const add=k=>{const m=weekKey(parse(k));return wk[m]=wk[m]||{m:new Date(m),ws:[],st:[],plan:0,ecart:0,tags:{},sess:0}};
+  const wk={};const add=k=>{const m=weekKey(parse(k));return wk[m]=wk[m]||{m:new Date(m),ws:[],st:[],plan:0,ecart:0,tags:{},sess:0,kc:0}};
   Object.keys(journal).forEach(k=>{const e=journal[k],o=add(k);if(e.w!=null)o.ws.push(e.w);if(e.st!=null)o.st.push(e.st);if(e.plan===0)o.plan++;if(e.plan>0)o.ecart++;(e.tags||[]).forEach(t=>o.tags[t]=(o.tags[t]||0)+1)});
-  hist.forEach(h=>{if(isMuscle(h))add(iso(new Date(h.d))).sess++});
+  hist.forEach(h=>{const o=add(iso(new Date(h.d)));if(isMuscle(h))o.sess++;o.kc+=kcalOf(h)});
   const rows=Object.values(wk).sort((a,b)=>a.m-b.m);let prev=null;
   rows.forEach(o=>{o.avg=o.ws.length?o.ws.reduce((a,b)=>a+b,0)/o.ws.length:null;o.delta=(o.avg!=null&&prev&&prev.avg!=null)?o.avg-prev.avg:null;o.stAvg=o.st.length?o.st.reduce((a,b)=>a+b,0)/o.st.length:null;if(o.avg!=null)prev=o});
-  $("wTable").innerHTML=rows.length?`<thead><tr><th>Semaine du</th><th>Poids moy.</th><th>Écart</th><th>Séances</th><th>Pas moy.</th><th>Jours plan</th><th>Écarts</th></tr></thead><tbody>${rows.slice().reverse().map(o=>`<tr><td>${o.m.toLocaleDateString("fr-FR",{day:"numeric",month:"short"})}</td><td>${o.avg!=null?nf(o.avg):"—"}</td><td class="${o.delta==null?"":o.delta<0?"dn":"up"}">${o.delta==null?"—":(o.delta<0?"−":"+")+nf(Math.abs(o.delta))}</td><td>${o.sess}/3</td><td>${o.stAvg!=null?Math.round(o.stAvg).toLocaleString("fr-FR"):"—"}</td><td>${o.plan}</td><td>${o.ecart}</td></tr>`).join("")}</tbody>`:`<tbody><tr><td class="empty">Les semaines apparaîtront ici au fil de tes saisies.</td></tr></tbody>`;
+  $("wTable").innerHTML=rows.length?`<thead><tr><th>Semaine du</th><th>Poids moy.</th><th>Écart</th><th>Séances</th><th>Activité</th><th>Pas moy.</th><th>Jours plan</th><th>Écarts</th></tr></thead><tbody>${rows.slice().reverse().map(o=>`<tr><td>${o.m.toLocaleDateString("fr-FR",{day:"numeric",month:"short"})}</td><td>${o.avg!=null?nf(o.avg):"—"}</td><td class="${o.delta==null?"":o.delta<0?"dn":"up"}">${o.delta==null?"—":(o.delta<0?"−":"+")+nf(Math.abs(o.delta))}</td><td>${o.sess}/3</td><td>${o.kc?o.kc.toLocaleString("fr-FR")+" kcal":"—"}</td><td>${o.stAvg!=null?Math.round(o.stAvg).toLocaleString("fr-FR"):"—"}</td><td>${o.plan}</td><td>${o.ecart}</td></tr>`).join("")}</tbody>`:`<tbody><tr><td class="empty">Les semaines apparaîtront ici au fil de tes saisies.</td></tr></tbody>`;
   // observations
   const obs=[];
   if(pts.length<2)obs.push("Pèse-toi au moins deux fois pour voir ta tendance. Une à deux pesées par semaine suffisent.");
@@ -823,7 +840,7 @@ function renderWeek(){
     let inner=ds.map(x=>{const cls=["slot",isM(x.t)?"m":"c",x.status==="done"?"done":x.status==="miss"?"miss":x.status==="skip"?"skip":""].join(" ");
       const sub=x.status==="done"?(x.act.h.s==="X"?"express":x.act.day!==x.day?"rattrapée":"faite"):x.status==="miss"?"manquée":x.status==="skip"?"annulée":x.moved?"décalée":"";
       return `<span class="${cls}">${slotShort(x)}${sub?`<small>${sub}</small>`:""}</span>`}).join("");
-    inner+=ex.map(a=>`<span class="slot done">${a.h.s==="Vélo"?"Vélo":a.h.s==="Balade"?"Bal.":a.h.s==="X"?"Exp.":a.h.s}<small>en plus</small></span>`).join("");
+    inner+=ex.map(a=>`<span class="slot done">${ACT[a.h.s]?ACT[a.h.s].sh:a.h.s}<small>en plus</small></span>`).join("");
     if(!inner)inner=`<span class="slot rest">Repos</span>`;
     h+=`<button type="button" class="wd${P.cur&&d===P.tIdx?" today":""}" data-d="${d}" aria-label="${DAYS[d]} ${date.getDate()}"><span class="dl">${DAYS[d].slice(0,3)}<br>${date.getDate()}</span>${inner}</button>`;
   }
@@ -832,7 +849,8 @@ function renderWeek(){
   const mus=P.slots.filter(x=>isM(x.t)),done=hist.filter(x=>isMuscle(x)&&monday(x.d).getTime()===P.mon.getTime()).length;
   const miss=mus.filter(x=>x.status==="miss");
   const prevMon=new Date(P.mon.getTime()-7*DAY),prevDone=hist.filter(x=>isMuscle(x)&&monday(x.d).getTime()===prevMon.getTime()).length;
-  $("wkNote").textContent=`${done} séance${done>1?"s":""} sur 3 cette semaine${hist.some(x=>new Date(x.d)<P.mon)?" · semaine dernière : "+prevDone+"/3":""}. Touche un jour pour noter, reporter ou annuler.`;
+  const wkK=hist.filter(x=>monday(x.d).getTime()===P.mon.getTime()).reduce((a,x)=>a+kcalOf(x),0);
+  $("wkNote").textContent=`${done} séance${done>1?"s":""} sur 3 cette semaine${wkK?" · ≈ "+wkK.toLocaleString("fr-FR")+" kcal dépensées en activité":""}${hist.some(x=>new Date(x.d)<P.mon)?" · semaine dernière : "+prevDone+"/3":""}. Touche un jour pour noter, reporter ou annuler.`;
   const al=$("wkAlert");
   if(miss.length&&P.cur){
     const x=miss[0],fd=freeDays(P,x);
@@ -842,9 +860,9 @@ function renderWeek(){
     al.querySelector('[data-a="x"]').onclick=()=>{cfg.sess="X";save();renderHome();start()};
   }else al.hidden=true;
 }
-function logAct(type,dayDate,min){
+function logAct(type,dayDate,min,int){
   const d=new Date(dayDate);d.setHours(12,0,0,0);
-  hist.push({d:d.toISOString(),s:type,w:cfg.week,t:isM(type)?(type==="X"?3:WEEKS[cfg.week].tours):0,dur:Math.round(min*60),m:1});
+  const e={d:d.toISOString(),s:type,w:cfg.week,t:isM(type)?(type==="X"?3:WEEKS[cfg.week].tours):0,dur:Math.round(min*60),m:1};if(int!=null)e.int=int;hist.push(e);
   hist.sort((a,b)=>b.d.localeCompare(a.d));store.set("cpc_hist",hist);
 }
 function setPlan(P,fn){const px=planX[P.k]||{mv:{},sk:{}};px.mv=px.mv||{};px.sk=px.sk||{};fn(px);planX[P.k]=px;store.set("cpc_plan",planX)}
@@ -875,7 +893,7 @@ function openDay(d,focusId){
     h+=`</div>`;
   });
   ex.forEach((a,i)=>{h+=`<div class="acts" data-ex="${i}"><p class="st"><b style="color:var(--ink)">${SNAME[a.h.s]||a.h.s}</b> · faite en plus${a.h.dur?", "+Math.round(a.h.dur/60)+" min":""}.</p><button type="button" data-a="unex">Retirer</button></div>`});
-  if(canLog){h+=`<div class="acts"><p class="st">Noter autre chose pour ce jour :</p><div class="days">${["A","B","X","Vélo","Balade"].map(t=>`<button type="button" data-a="add" data-t="${t}">${SNAME[t]}</button>`).join("")}</div></div>`}
+  if(canLog){h+=`<div class="acts"><button type="button" data-a="form">+ Noter une activité ce jour (paddle, foot, pêche…)</button></div>`}
   if(!h)h=`<p class="st">Jour de repos. Une balade en famille compte toujours pour tes pas.</p>`;
   $("dsBody").innerHTML=h;
   $("dsBody").querySelectorAll("button[data-a]").forEach(b=>b.onclick=()=>{
@@ -883,8 +901,8 @@ function openDay(d,focusId){
     const defMin=t=>t==="velo"||t==="Vélo"?45:t==="balade"||t==="Balade"?30:t==="X"?14:(()=>{const o=cfg.sess;cfg.sess=t;const m=estMin();cfg.sess=o;return m})();
     if(a==="run"){cfg.sess=x.t;save();closeDay();renderHome();start();return}
     if(a==="x"){cfg.sess="X";save();closeDay();renderHome();start();return}
-    if(a==="log"){const t=x.t==="velo"?"Vélo":x.t==="balade"?"Balade":x.t;const day=x.status==="miss"&&!canLog?new Date():date;logAct(t,day<=new Date()?day:new Date(),defMin(x.t))}
-    if(a==="add"){logAct(b.dataset.t,date,defMin(b.dataset.t))}
+    if(a==="log"){const t=x.t==="velo"?"Vélo":x.t==="balade"?"Balade":x.t;const day=x.status==="miss"&&!canLog?new Date():date;openActForm(day<=new Date()?day:new Date(),t,defMin(x.t));return}
+    if(a==="form"){openActForm(date,null);return}
     if(a==="unlog"){hist=hist.filter(hh=>hh!==x.act.h);store.set("cpc_hist",hist)}
     if(a==="unex"){const it=ex[+box.dataset.ex];hist=hist.filter(hh=>hh!==it.h);store.set("cpc_hist",hist)}
     if(a==="mv")setPlan(P,px=>{const to=+b.dataset.to;if(to===x.id)delete px.mv[x.id];else px.mv[x.id]=to;delete px.sk[x.id]});
@@ -895,7 +913,31 @@ function openDay(d,focusId){
   });
   $("daySheet").hidden=false;$("dsClose").focus();
 }
-$("bAddAct").onclick=()=>openDay(dayIdx(new Date()));
+$("bAddAct").onclick=()=>openActForm(new Date(),null);
+function openActForm(date,preset,presetMin){
+  let type=preset||"Vélo",int=ACT[type].lv?ACT[type].def:null,min=presetMin||ACT[type].min||(()=>{const o=cfg.sess;cfg.sess=type;const m=estMin();cfg.sess=o;return m})();
+  let day=iso(date);
+  $("dsTitle").textContent="Noter une activité";
+  const draw=()=>{
+    const a=ACT[type],w=weightAt(parse(day).getTime()+DAY/2),h={s:type,int,dur:min*60,d:new Date(parse(day).getTime()+DAY/2).toISOString()};
+    $("dsBody").innerHTML=`<div class="acts">
+      <div class="days" id="afT">${ACT_ORDER.map(k=>`<button type="button" data-t="${k}" aria-pressed="${k===type}">${ACT[k].nm}</button>`).join("")}</div>
+      ${a.lv?`<p class="st">Intensité</p><div class="days" id="afI">${a.lv.map((l,i)=>`<button type="button" data-i="${i}" aria-pressed="${i===int}">${l[0]}</button>`).join("")}</div>`:""}
+      <div class="f2"><label class="fl">Jour<input type="date" id="afD" value="${day}" max="${iso(new Date())}"></label><label class="fl">Durée (min)<input type="number" id="afM" inputmode="numeric" min="1" max="600" value="${min}"></label></div>
+      <div class="days" id="afQ">${[15,30,45,60,90,120].map(m=>`<button type="button" data-m="${m}" aria-pressed="${m===min}">${m<60?m+" min":Math.floor(m/60)+" h"+(m%60?String(m%60).padStart(2,"0"):"")}</button>`).join("")}</div>
+      <p class="kc"><b>≈ ${kcalOf(h).toLocaleString("fr-FR")} kcal</b> <span class="st">pour ${nf(w)} kg</span></p>
+      <button type="button" class="pri" id="afSave">Enregistrer</button>
+      <p class="note">Estimation à ±25 %. Ne mange pas plus pour compenser : ces calories accélèrent ta perte. Au-delà de 600 kcal d'activité dans la journée, ajoute une collation.</p>
+    </div>`;
+    $("dsBody").querySelectorAll("#afT button").forEach(b=>b.onclick=()=>{type=b.dataset.t;int=ACT[type].lv?ACT[type].def:null;min=ACT[type].min||(()=>{const o=cfg.sess;cfg.sess=type;const m=estMin();cfg.sess=o;return m})();draw()});
+    $("dsBody").querySelectorAll("#afI button").forEach(b=>b.onclick=()=>{int=+b.dataset.i;draw()});
+    $("dsBody").querySelectorAll("#afQ button").forEach(b=>b.onclick=()=>{min=+b.dataset.m;draw()});
+    $("afM").onchange=e=>{const v=parseInt(e.target.value,10);if(v>0&&v<=600){min=v;draw()}};
+    $("afD").onchange=e=>{if(e.target.value&&e.target.value<=iso(new Date())){day=e.target.value;draw()}};
+    $("afSave").onclick=()=>{logAct(type,parse(day).getTime()+DAY/2,min,int);closeDay();renderHome()};
+  };
+  draw();$("daySheet").hidden=false;$("dsClose").focus();
+}
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("daySheet").hidden)closeDay()});
 
 /* ---------- Navigation ---------- */
