@@ -1,0 +1,353 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#B5532F"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Circuit"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style></head><body>
+<title>Circuit Poids du Corps</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: one narrow column (home), full-screen guided runner overlay; brick accent for effort, green for rest */
+:root{
+  --bg:#F2F3EF; --surface:#FFFFFF; --ink:#1B211D; --muted:#5E6962; --line:#D8DCD6;
+  --accent:#B5532F; --accent-ink:#FFFFFF; --accent-soft:#F4E1D8; --rest:#2E6E5D; --rest-soft:#DCEDE7;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111512; --surface:#1A1F1B; --ink:#EDF0EB; --muted:#9AA59D; --line:#2B322D;
+  --accent:#E0794E; --accent-ink:#1A0E08; --accent-soft:#3A2419; --rest:#62B49C; --rest-soft:#1C3029; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111512; --surface:#1A1F1B; --ink:#EDF0EB; --muted:#9AA59D; --line:#2B322D;
+  --accent:#E0794E; --accent-ink:#1A0E08; --accent-soft:#3A2419; --rest:#62B49C; --rest-soft:#1C3029; color-scheme:dark}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45}
+*{box-sizing:border-box}
+.wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px;display:flex;flex-direction:column;gap:20px}
+h1{font-family:var(--display);font-weight:700;font-size:2.1rem;line-height:1;margin:0;letter-spacing:.01em;text-wrap:balance}
+h2{font-family:var(--display);font-weight:600;font-size:1.25rem;margin:0;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.weekbar{display:flex;align-items:center;gap:8px;font-size:.95rem;color:var(--muted)}
+.dots{display:flex;gap:5px}.dots span{width:12px;height:12px;border-radius:50%;border:2px solid var(--accent)}
+.dots span.on{background:var(--accent)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.lbl{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;min-width:72px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{font:600 1rem var(--body);padding:8px 14px;border-radius:999px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.toggle{display:flex;align-items:center;gap:10px;font-size:.95rem;cursor:pointer}
+.toggle input{width:20px;height:20px;accent-color:var(--accent)}
+.recap{font-size:.95rem;color:var(--muted)}
+.recap b{color:var(--ink);font-variant-numeric:tabular-nums}
+ol.ex{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+ol.ex li{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:baseline;padding:10px 0;border-top:1px solid var(--line)}
+ol.ex li:first-child{border-top:0}
+ol.ex .n{font-family:var(--display);font-weight:700;color:var(--accent);font-size:1.2rem}
+ol.ex .nm{font-weight:600;min-width:0}
+ol.ex .cue{display:block;font-weight:400;color:var(--muted);font-size:.88rem}
+ol.ex .q{font-family:var(--display);font-weight:600;font-size:1.15rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.go{font:700 1.5rem var(--display);letter-spacing:.04em;text-transform:uppercase;background:var(--accent);color:var(--accent-ink);border:0;border-radius:14px;padding:16px;cursor:pointer;width:100%}
+.go:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.hist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;font-size:.95rem}
+.hist li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.hist li:first-child{border-top:0}
+.hist .tag{font-weight:700;color:var(--accent)}
+.empty{color:var(--muted);font-size:.95rem;margin:0}
+.note{font-size:.85rem;color:var(--muted);margin:0}
+/* Runner */
+.run{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;z-index:20;
+  padding-top:max(14px,env(safe-area-inset-top,0px));padding-bottom:max(16px,env(safe-area-inset-bottom,0px));
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.run.rest{background:var(--rest-soft)}
+.run.work{background:var(--accent-soft)}
+.rtop{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.prog{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:10px}
+.prog i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+.rmid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;min-height:0}
+.phase{font:600 1.1rem var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.run.rest .phase{color:var(--rest)}.run.work .phase{color:var(--accent)}
+.exname{font:700 clamp(2rem,9vw,3rem)/1.05 var(--display);margin:0;text-wrap:balance;max-width:22ch}
+.big{font:700 clamp(6rem,34vw,11rem)/1 var(--display);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.big small{font-size:.35em;color:var(--muted);font-weight:600}
+.cue2{color:var(--muted);max-width:34ch;font-size:1.05rem}
+.next{font-size:.95rem;color:var(--muted)}
+.next b{color:var(--ink)}
+.rbot{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rbot button{font:700 1.15rem var(--display);letter-spacing:.05em;text-transform:uppercase;padding:16px 10px;border-radius:12px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer}
+.rbot .done{grid-column:1/-1;background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-size:1.4rem}
+.rbot .stop{border-color:var(--line);color:var(--muted)}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;padding:3px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--muted)}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.pill.listen i{background:var(--accent);animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.3}}
+.rmsg{margin:8px 0 0;font-size:.9rem;color:var(--accent)}
+.fin{display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center}
+@media (prefers-reduced-motion: reduce){.prog i{transition:none}.pill.listen i{animation:none}}
+</style>
+
+<div class="wrap" id="home">
+  <div class="head">
+    <h1>Circuit<br>poids du corps</h1>
+    <div class="weekbar"><span class="dots" id="dots"></span><span id="weektxt">0/3 cette semaine</span></div>
+  </div>
+
+  <section class="panel" aria-label="Réglages de la séance">
+    <div class="row"><span class="lbl">Semaine</span><div class="seg" id="segWeek"></div></div>
+    <div class="row"><span class="lbl">Séance</span><div class="seg" id="segSess"></div></div>
+    <div class="recap" id="recap"></div>
+    <label class="toggle"><input type="checkbox" id="optVoice" checked> Annonces vocales</label>
+    <label class="toggle"><input type="checkbox" id="optCount" checked> Compter les répétitions à voix haute (rythme guidé)</label>
+    <label class="toggle"><input type="checkbox" id="optMic"> Commandes vocales par le micro</label>
+    <p class="note" id="micHelp">Pendant la séance, dis <b>« fini »</b> quand tu as terminé un exercice, <b>« prêt »</b> pour écourter un repos, <b>« pause »</b>, <b>« reprends »</b>, <b>« passe »</b> ou <b>« arrête la séance »</b>.</p>
+    <p class="note" id="micNote" hidden></p>
+    <label class="toggle"><input type="checkbox" id="optWarm" checked> Échauffement de 5 min</label>
+    <label class="toggle"><input type="checkbox" id="optBonus"> Tour bonus</label>
+  </section>
+
+  <section class="panel" aria-label="Exercices">
+    <h2 id="exTitle">Séance A</h2>
+    <ol class="ex" id="exList"></ol>
+  </section>
+
+  <button class="go" id="btnGo">Démarrer la séance</button>
+  <button class="go" id="btnInstall" style="background:transparent;color:var(--ink);border:1.5px solid var(--ink);font-size:1.15rem;padding:12px" hidden>Installer l'application</button>
+  <p class="note">Garde le téléphone posé, son activé. Les 2 dernières répétitions doivent être dures mais propres. Douleur articulaire : tu arrêtes l'exercice.</p>
+
+  <section class="panel" aria-label="Historique">
+    <h2>Séances faites</h2>
+    <ul class="hist" id="hist"></ul>
+  </section>
+</div>
+
+<div class="run" id="run" hidden>
+  <div>
+    <div class="rtop"><span id="rTour">Tour 1/2</span><span class="pill" id="rMic" hidden><i></i><span id="rMicTxt">Micro</span></span><span id="rClock">0:00</span></div>
+    <p class="rmsg" id="rMicMsg" hidden></p>
+    <div class="prog"><i id="rProg"></i></div>
+  </div>
+  <div class="rmid" id="rMid">
+    <div class="phase" id="rPhase">Prêt</div>
+    <h3 class="exname" id="rName">Squat</h3>
+    <div class="big" id="rBig">10</div>
+    <div class="cue2" id="rCue"></div>
+    <div class="next" id="rNext"></div>
+  </div>
+  <div class="rbot" id="rBot">
+    <button class="done" id="bDone">Fait</button>
+    <button id="bPause">Pause</button>
+    <button id="bSkip">Passer</button>
+    <button class="stop" id="bStop" style="grid-column:1/-1">Arrêter la séance</button>
+  </div>
+</div>
+
+<script>
+const WEEKS={1:{tours:2,reps:10,hold:20,repsTxt:"10"},2:{tours:3,reps:11,hold:30,repsTxt:"10-12"},3:{tours:3,reps:13,hold:40,repsTxt:"12-15"},4:{tours:3,reps:15,hold:45,repsTxt:"15"}};
+const SESS={
+ A:[
+  {nm:"Squat",cue:"Fesses en arrière, dos droit, talons au sol.",t:3},
+  {nm:"Pompes inclinées",cue:"Mains sur une table, corps gainé, poitrine vers le bord.",t:3},
+  {nm:"Fentes arrière",cue:"Grand pas en arrière, genou avant au-dessus de la cheville.",t:5,leg:1},
+  {nm:"Pont fessier",cue:"Au sol, pousse dans les talons, serre les fessiers en haut.",t:2.5},
+  {nm:"Montées de genoux",cue:"Sur place, genoux à hauteur de hanche, bras actifs.",t:1.6,leg:1},
+  {nm:"Planche",cue:"Sur les avant-bras, corps droit, ventre serré, respire.",hold:1}
+ ],
+ B:[
+  {nm:"Squat sumo",cue:"Pieds écartés, pointes vers l'extérieur, genoux dans l'axe.",t:3},
+  {nm:"Montées sur marche",cue:"Chaise solide ou marche, pousse avec la jambe du haut.",t:5,leg:1},
+  {nm:"Pompes sur les genoux",cue:"Mains sous les épaules, descends la poitrine, dos droit.",t:3},
+  {nm:"Superman",cue:"Sur le ventre, lève bras et jambes, tiens 1 seconde en haut.",t:3},
+  {nm:"Mountain climbers lents",cue:"En planche haute, ramène un genou puis l'autre, sans te presser.",t:2.4,leg:1},
+  {nm:"Gainage latéral",cue:"Sur l'avant-bras, hanches hautes, corps aligné.",hold:1,sides:1}
+ ]
+};
+const $=id=>document.getElementById(id);
+const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let cfg=Object.assign({week:1,sess:"A",voice:true,count:true,warm:true,bonus:false,mic:false},store.get("cpc_cfg",{}));
+let hist=store.get("cpc_hist",[]);
+
+/* ---------- Home ---------- */
+function seg(el,items,cur,on){el.innerHTML="";items.forEach(([v,l])=>{const b=document.createElement("button");b.type="button";b.textContent=l;b.setAttribute("aria-pressed",String(v==cur));b.onclick=()=>on(v);el.appendChild(b)})}
+function qty(ex,w){if(ex.hold)return w.hold+" s"+(ex.sides?" / côté":"");return w.repsTxt+(ex.leg?" / jambe":"")}
+function tours(){return WEEKS[cfg.week].tours+(cfg.bonus?1:0)}
+function renderHome(){
+  seg($("segWeek"),[[1,"1"],[2,"2"],[3,"3"],[4,"4"]],cfg.week,v=>{cfg.week=+v;save();renderHome()});
+  seg($("segSess"),[["A","A"],["B","B"]],cfg.sess,v=>{cfg.sess=v;save();renderHome()});
+  const w=WEEKS[cfg.week];
+  $("recap").innerHTML=`<b>${tours()} tours</b> · <b>${w.repsTxt}</b> répétitions · gainage <b>${w.hold} s</b> · environ <b>${estMin()} min</b>`;
+  $("exTitle").textContent="Séance "+cfg.sess;
+  $("exList").innerHTML=SESS[cfg.sess].map((e,i)=>`<li><span class="n">${i+1}</span><span class="nm">${e.nm}<span class="cue">${e.cue}</span></span><span class="q">${qty(e,w)}</span></li>`).join("");
+  ["Voice","Count","Warm","Bonus","Mic"].forEach(k=>$("opt"+k).checked=!!cfg[k.toLowerCase()]);
+  const wk=weekKey(new Date()),n=hist.filter(h=>weekKey(new Date(h.d))===wk).length;
+  $("dots").innerHTML=[0,1,2].map(i=>`<span class="${i<n?"on":""}"></span>`).join("");
+  $("weektxt").textContent=`${n}/3 cette semaine`;
+  $("hist").innerHTML=hist.length?hist.slice(0,12).map(h=>{const d=new Date(h.d);return `<li><span>${d.toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"})}</span><span><span class="tag">${h.s}</span> · sem. ${h.w} · ${h.t} tours</span><span>${fmt(h.dur)}</span></li>`}).join(""):`<p class="empty">Aucune séance enregistrée. La première apparaîtra ici.</p>`;
+}
+function estMin(){let s=0;const w=WEEKS[cfg.week];if(cfg.warm)s+=300;const T=tours();SESS[cfg.sess].forEach(e=>{s+=T*(e.hold?w.hold*(e.sides?2:1)+(e.sides?8:0)+4:w.reps*e.t+4)});s+=T*6*20+(T-1)*40;return Math.round(s/60)}
+function weekKey(d){const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x.toDateString()}
+function save(){store.set("cpc_cfg",cfg)}
+["Voice","Count","Warm","Bonus","Mic"].forEach(k=>$("opt"+k).onchange=e=>{cfg[k.toLowerCase()]=e.target.checked;save();renderHome()});
+const fmt=s=>{s=Math.max(0,Math.round(s));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")};
+
+/* ---------- Voice & sound ---------- */
+let frVoice=null,actx=null;
+function pickVoice(){try{const v=speechSynthesis.getVoices();frVoice=v.find(x=>/^fr(-|_)FR/i.test(x.lang))||v.find(x=>/^fr/i.test(x.lang))||null}catch(e){}}
+if("speechSynthesis" in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+function say(t,cut){if(!cfg.voice||!("speechSynthesis" in window))return;try{if(cut)speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="fr-FR";if(frVoice)u.voice=frVoice;u.rate=1.05;u.onend=u.onerror=()=>{lastSpeechEnd=performance.now()};speechSynthesis.speak(u)}catch(e){}}
+function beep(f=880,d=.12){try{if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f;o.connect(g);g.connect(actx.destination);const t=actx.currentTime;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.3,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.start(t);o.stop(t+d+.02)}catch(e){}}
+
+/* ---------- Voice commands ---------- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null,micOn=false,lastCmd=0,lastSpeechEnd=0,hintGiven=false;
+function micMsg(m){$("micNote").textContent=m;$("micNote").hidden=!m;$("rMicMsg").textContent=m;$("rMicMsg").hidden=!m}
+function showMic(){$("rMic").hidden=!cfg.mic;$("rMic").classList.toggle("listen",micOn);$("rMicTxt").textContent=micOn?"Micro actif":"Micro coupé"}
+function micStart(){
+  micMsg("");hintGiven=false;
+  if(!cfg.mic){showMic();return}
+  if(!SR){micMsg("Commandes vocales indisponibles dans ce navigateur : utilise Chrome.");showMic();return}
+  try{
+    rec=new SR();rec.lang="fr-FR";rec.continuous=true;rec.interimResults=true;rec.maxAlternatives=1;
+    rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)handleCmd(e.results[i][0].transcript.toLowerCase())};
+    rec.onerror=e=>{if(["not-allowed","service-not-allowed","audio-capture"].includes(e.error)){micOn=false;micMsg("Micro refusé. Autorise le micro pour cette appli dans les réglages de Chrome (icône à gauche de l\'adresse ou Paramètres du site).");showMic()}};
+    rec.onend=()=>{if(micOn&&timer){setTimeout(()=>{try{rec&&rec.start()}catch(e){}},250)}};
+    micOn=true;rec.start();
+  }catch(e){micOn=false;micMsg("Impossible de démarrer le micro ici.")}
+  showMic();
+}
+function micStop(){micOn=false;try{rec&&rec.abort()}catch(e){}rec=null;showMic()}
+function handleCmd(t){
+  const now=performance.now();
+  if(!timer||now-lastCmd<1500)return;
+  try{if(speechSynthesis.speaking)return}catch(e){}
+  if(now-lastSpeechEnd<600)return;
+  let a=null;
+  if(/arr[eê]te la s[ée]ance|stop s[ée]ance|fin de s[ée]ance/.test(t))a="stop";
+  else if(/\bpause\b/.test(t))a="pause";
+  else if(/reprend|reprise|continue|on y va/.test(t))a="resume";
+  else if(/\bpass(e|er)\b|\bsaute\b/.test(t))a="skip";
+  else if(/fini|termin|\bfait\b|c'est bon|suivant|pr[eê]t|\bok\b|\bokay\b/.test(t))a="done";
+  if(!a)return;lastCmd=now;
+  if(a==="done")$("bDone").onclick();
+  else if(a==="pause"){if(!paused)$("bPause").onclick()}
+  else if(a==="resume"){if(paused)$("bPause").onclick()}
+  else if(a==="skip")$("bSkip").onclick();
+  else if(a==="stop"){say("Séance arrêtée.",true);closeRun()}
+}
+
+/* ---------- Runner ---------- */
+let steps=[],si=0,st=null,timer=null,paused=false,last=0,totalMs=0,wake=null;
+function build(){
+  const w=WEEKS[cfg.week],L=SESS[cfg.sess],T=tours(),s=[];
+  if(cfg.warm)s.push({k:"warm",dur:300,nm:"Échauffement",cues:[[0,"Échauffement, 5 minutes. Marche sur place en levant les genoux."],[90,"Rotations des bras, dans un sens puis dans l'autre."],[180,"Rotations des hanches, doucement."],[240,"Pour finir, 10 squats lents."]]});
+  for(let t=1;t<=T;t++){L.forEach((e,i)=>{
+    const base={tour:t,idx:i,ex:e,nm:e.nm};
+    if(e.hold){
+      if(e.sides){s.push({...base,k:"hold",dur:w.hold,side:"côté gauche"});s.push({k:"rest",dur:6,nm:"Change de côté",tour:t,idx:i,sw:1});s.push({...base,k:"hold",dur:w.hold,side:"côté droit"})}
+      else s.push({...base,k:"hold",dur:w.hold});
+    }else s.push({...base,k:"reps",reps:w.reps});
+    const lastEx=i===L.length-1;
+    if(!(lastEx&&t===T))s.push({k:"rest",dur:lastEx?60:20,nm:lastEx?"Fin du tour":"Repos",tour:t,idx:i});
+  })}
+  return s;
+}
+function nextWork(from){for(let j=from;j<steps.length;j++){if(steps[j].k==="reps"||steps[j].k==="hold")return steps[j]}return null}
+function workTxt(s){if(!s)return"";if(s.k==="hold")return `${s.nm}${s.side?", "+s.side:""}, ${s.dur} secondes`;return `${s.nm}, ${s.reps} répétitions${s.ex.leg?" par jambe":""}`}
+function start(){
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();actx.resume&&actx.resume()}catch(e){}
+  try{navigator.wakeLock&&navigator.wakeLock.request("screen").then(l=>wake=l).catch(()=>{})}catch(e){}
+  steps=build();si=0;totalMs=0;paused=false;
+  $("home").hidden=true;$("run").hidden=false;
+  say(`C'est parti. Séance ${cfg.sess}, semaine ${cfg.week}, ${tours()} tours.`,true);
+  enter(0);last=performance.now();clearInterval(timer);timer=setInterval(tick,100);micStart();
+}
+function enter(i){
+  si=i;if(si>=steps.length)return finish();
+  const s=steps[si];st={el:0,lastSec:null,lastCount:0,cueI:0,half:false,lead:(s.k==="reps"||s.k==="hold")?3500:0,leadBeep:null};
+  const run=$("run");run.classList.toggle("rest",s.k==="rest");run.classList.toggle("work",s.k==="reps"||s.k==="hold");
+  if(s.k==="rest"){
+    const n=nextWork(si+1);
+    say(s.sw?"Change de côté.":`${s.nm}, ${s.dur} secondes. Ensuite : ${workTxt(n)}.`,true);
+  }else if(s.k!=="warm"){
+    say(`Exercice ${s.idx+1} : ${workTxt(s)}.`,true);
+  }
+  render();
+}
+function tick(){
+  const now=performance.now(),dt=now-last;last=now;
+  if(paused||!st)return;
+  totalMs+=dt;st.el+=dt;
+  const s=steps[si];
+  if(st.lead>0){
+    const left=st.lead-st.el;const sec=Math.ceil(left/1000);
+    if(sec!==st.leadBeep&&sec<=3&&sec>0){st.leadBeep=sec;beep(660)}
+    if(left<=0){st.el=0;st.lead=0;beep(1100,.25);if(s.k==="hold")say("Tiens !",false);if(s.k==="reps"&&!cfg.count){say(micOn&&!hintGiven?"À toi. Dis fini quand c'est fait.":"À toi.",false);hintGiven=true}}
+    render();return;
+  }
+  if(s.k==="warm"){
+    while(st.cueI<s.cues.length&&st.el/1000>=s.cues[st.cueI][0]){say(s.cues[st.cueI][1],true);st.cueI++}
+  }
+  if(s.k==="reps"){
+    if(cfg.count){
+      const c=Math.floor(st.el/(s.ex.t*1000));
+      if(c!==st.lastCount&&c<=s.reps){st.lastCount=c;say(c===s.reps?`${c}. Bravo.`:String(c),true);if(c===s.reps){setTimeout(()=>{if(steps[si]===s)enter(si+1)},900);st.lead=-1}}
+    }
+    render();return;
+  }
+  const rem=s.dur-st.el/1000,sec=Math.ceil(rem);
+  if(s.k==="hold"&&!st.half&&rem<=s.dur/2&&s.dur>=20){st.half=true;say("Mi-temps, tiens bon.",false)}
+  if(sec!==st.lastSec){st.lastSec=sec;if(sec<=3&&sec>0)beep(s.k==="rest"?660:880)}
+  if(rem<=0){if(s.k==="hold")say("Stop.",true);beep(1100,.25);return enter(si+1)}
+  render();
+}
+function render(){
+  const s=steps[si];if(!s)return;
+  const T=tours();
+  $("rTour").textContent=s.k==="warm"?"Échauffement":`Tour ${s.tour}/${T} · exercice ${s.idx+1}/6`;
+  $("rClock").textContent=fmt(totalMs/1000);
+  $("rProg").style.width=(si/steps.length*100)+"%";
+  const leadOn=st.lead>0;
+  let phase,name,big,cue="",next="";
+  if(s.k==="warm"){phase="Échauffement";name=(s.cues.filter(c=>st.el/1000>=c[0]).pop()||s.cues[0])[1].replace(/^Échauffement, 5 minutes\. /,"");big=fmt(s.dur-st.el/1000);}
+  else if(s.k==="rest"){phase=s.sw?"Change de côté":s.nm;const n=nextWork(si+1);name=n?n.nm+(n.side?" · "+n.side:""):"";big=Math.max(0,Math.ceil(s.dur-st.el/1000))+"<small> s</small>";next=n?`Ensuite : <b>${n.k==="hold"?n.dur+" s":n.reps+(n.ex.leg?" par jambe":" rép.")}</b>`:"";cue=n?n.ex.cue:"";}
+  else if(s.k==="hold"){phase=leadOn?"Prêt":"Tiens";name=s.nm+(s.side?" · "+s.side:"");big=leadOn?Math.ceil(st.lead/1000-st.el/1000):Math.max(0,Math.ceil(s.dur-st.el/1000))+"<small> s</small>";cue=s.ex.cue;}
+  else{phase=leadOn?"Prêt":"Effort";name=s.nm;cue=s.ex.cue;
+    if(leadOn)big=Math.ceil(st.lead/1000-st.el/1000);
+    else if(cfg.count)big=`${Math.min(st.lastCount,s.reps)}<small>/${s.reps}</small>`;
+    else big=`${s.reps}<small>${s.ex.leg?" / jambe":" rép."}</small>`;
+    if(s.ex.leg&&!leadOn)next="Compte par jambe";}
+  $("rPhase").textContent=phase;$("rName").textContent=name;$("rBig").innerHTML=big;$("rCue").textContent=cue;$("rNext").innerHTML=next;
+  $("bDone").textContent=s.k==="reps"?"Fait":s.k==="rest"?"Je suis prêt":"Terminé";
+  $("bPause").textContent=paused?"Reprendre":"Pause";
+}
+function finish(){
+  clearInterval(timer);timer=null;
+  const done={d:new Date().toISOString(),s:cfg.sess,w:cfg.week,t:tours(),dur:Math.round(totalMs/1000)};
+  hist.unshift(done);hist=hist.slice(0,60);store.set("cpc_hist",hist);
+  if(cfg.sess==="A")cfg.sess="B";else cfg.sess="A";save();
+  say(`Séance terminée en ${Math.round(done.dur/60)} minutes. Bien joué. Pense à boire de l'eau et à t'étirer.`,true);
+  const run=$("run");run.classList.remove("rest","work");
+  $("rTour").textContent="Terminé";$("rProg").style.width="100%";
+  $("rPhase").textContent="Séance terminée";$("rName").textContent=`Séance ${done.s} · semaine ${done.w}`;
+  $("rBig").innerHTML=fmt(done.dur);$("rCue").textContent="Étire les cuisses, les mollets et la poitrine 30 secondes chacun.";$("rNext").textContent="La prochaine séance est préréglée sur "+cfg.sess+".";
+  $("rBot").hidden=true;
+  const b=document.createElement("button");b.className="go";b.textContent="Retour";b.style.marginTop="12px";b.onclick=closeRun;$("rMid").appendChild(b);b.id="bBack";
+  micStop();release();
+}
+function closeRun(){micStop();clearInterval(timer);timer=null;st=null;try{speechSynthesis.cancel()}catch(e){}release();const b=$("bBack");if(b)b.remove();$("rBot").hidden=false;$("run").hidden=true;$("home").hidden=false;renderHome();window.scrollTo(0,0)}
+function release(){try{wake&&wake.release()}catch(e){}wake=null}
+$("btnGo").onclick=start;
+$("bPause").onclick=()=>{paused=!paused;if(paused){try{speechSynthesis.cancel()}catch(e){}say("Pause.")}else say("On reprend.");render()};
+$("bSkip").onclick=()=>{paused=false;enter(si+1)};
+$("bDone").onclick=()=>{paused=false;const s=steps[si];if(s&&s.k==="reps")say("Bien.",true);enter(si+1)};
+let stopArm=0;
+$("bStop").onclick=()=>{const now=Date.now();if(now-stopArm<3000){closeRun();stopArm=0;$("bStop").textContent="Arrêter la séance"}else{stopArm=now;$("bStop").textContent="Appuie encore pour arrêter";setTimeout(()=>{$("bStop").textContent="Arrêter la séance"},3000)}};
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&timer&&!wake){try{navigator.wakeLock&&navigator.wakeLock.request("screen").then(l=>wake=l).catch(()=>{})}catch(e){}}});
+renderHome();
+/* ---------- PWA ---------- */
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
+let deferredInstall=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstall=e;$("btnInstall").hidden=false});
+$("btnInstall").onclick=async()=>{if(!deferredInstall)return;deferredInstall.prompt();try{await deferredInstall.userChoice}catch(e){}deferredInstall=null;$("btnInstall").hidden=true};
+window.addEventListener("appinstalled",()=>{$("btnInstall").hidden=true});
+</script>
+
+</body></html>
