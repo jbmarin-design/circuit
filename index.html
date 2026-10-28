@@ -99,11 +99,49 @@ ol.ex .demo{display:inline-block;margin-top:2px;font-size:.85rem;font-weight:600
 .sfig{width:100%;aspect-ratio:6/5;max-height:46vh;background:var(--bg);border-radius:12px}
 .sheet p{margin:0;color:var(--muted)}
 .yt{display:block;text-align:center;font:700 1.15rem var(--display);letter-spacing:.04em;text-transform:uppercase;text-decoration:none;color:var(--accent-ink);background:var(--accent);border-radius:12px;padding:13px}
+.wrap.withtabs{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(0px,env(safe-area-inset-left,0px));padding-right:max(0px,env(safe-area-inset-right,0px))}
+.tabs button{font:600 1.05rem var(--display);letter-spacing:.06em;text-transform:uppercase;background:transparent;border:0;color:var(--muted);padding:14px 4px;cursor:pointer;border-top:3px solid transparent}
+.tabs button[aria-current="page"]{color:var(--accent);border-top-color:var(--accent)}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fl{display:flex;flex-direction:column;gap:4px;font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;min-width:0}
+.fl input,.fl textarea,.dt{font:400 1.1rem var(--body);color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;text-transform:none;letter-spacing:0}
+.fl input:focus,.fl textarea:focus,.dt:focus{outline:2px solid var(--accent);outline-offset:1px}
+.daynav{display:flex;gap:8px;align-items:center}
+.daynav .dt{flex:1;min-width:0}
+.daynav button{font:600 1.2rem var(--body);background:transparent;border:1.5px solid var(--line);color:var(--ink);border-radius:10px;width:44px;height:44px;cursor:pointer}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 10px;min-width:0}
+.kpi .v{font:700 1.7rem/1 var(--display);font-variant-numeric:tabular-nums}
+.kpi .k{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin-top:4px}
+.kpi .s{font-size:.8rem;color:var(--muted)}
+.chart{width:100%;display:block}
+.chart text{font:600 9px var(--body);fill:var(--muted)}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .goal{stroke:var(--rest);stroke-width:1.2;stroke-dasharray:4 3}
+.chart .goaltx{fill:var(--rest)}
+.chart .wl{fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linejoin:round}
+.chart .wd{fill:var(--accent)}
+.chart .tr{stroke:var(--ink);stroke-width:1.2;stroke-dasharray:2 3;opacity:.6}
+.chart .bar{fill:var(--accent);opacity:.85}
+.chart .bar.low{fill:var(--muted);opacity:.5}
+.obs{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px}
+.tblwrap{overflow-x:auto}
+table.wk{border-collapse:collapse;width:100%;font-size:.9rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+table.wk th{text-align:right;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;padding:6px 6px;border-bottom:1px solid var(--line)}
+table.wk td{text-align:right;padding:7px 6px;border-bottom:1px solid var(--line)}
+table.wk th:first-child,table.wk td:first-child{text-align:left}
+table.wk td.empty{white-space:normal;text-align:left}
+.dn{color:var(--rest);font-weight:700}.up{color:var(--accent);font-weight:700}
+.btnline{display:flex;gap:8px;flex-wrap:wrap}
+.btnline button,.btnline label{font:600 .95rem var(--body);background:transparent;border:1.5px solid var(--line);color:var(--ink);border-radius:10px;padding:9px 14px;cursor:pointer}
+.ok{color:var(--rest);font-weight:600}
 .fin{display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center}
 @media (prefers-reduced-motion: reduce){.prog i{transition:none}.pill.listen i{animation:none}}
 </style>
 
-<div class="wrap" id="home">
+<div class="wrap withtabs" id="home">
   <div class="head">
     <h1>Circuit<br>poids du corps</h1>
     <div class="weekbar"><span class="dots" id="dots"></span><span id="weektxt">0/3 cette semaine</span></div>
@@ -136,6 +174,53 @@ ol.ex .demo{display:inline-block;margin-top:2px;font-size:.85rem;font-weight:600
     <ul class="hist" id="hist"></ul>
   </section>
 </div>
+
+<div class="wrap withtabs" id="journal" hidden>
+  <div class="head"><h1>Journal</h1></div>
+  <section class="panel" aria-label="Saisie du jour">
+    <div class="daynav"><button type="button" id="jPrev" aria-label="Jour précédent">‹</button><input class="dt" type="date" id="jDate" aria-label="Jour"><button type="button" id="jNext" aria-label="Jour suivant">›</button></div>
+    <div class="f2">
+      <label class="fl">Poids (kg)<input id="jW" type="number" inputmode="decimal" step="0.1" min="40" max="200" placeholder="pas pesé"></label>
+      <label class="fl">Pas<input id="jSt" type="number" inputmode="numeric" step="100" min="0" max="100000" placeholder="0"></label>
+    </div>
+    <div class="row"><span class="lbl">Repas</span><div class="seg" id="jPlan"></div></div>
+    <div class="row"><span class="lbl">Écarts</span><div class="seg" id="jTags"></div></div>
+    <label class="fl">Note<textarea id="jNote" rows="2" placeholder="Ex. repas de famille, mal dormi, journée chantier"></textarea></label>
+    <p class="note" id="jSess"></p>
+    <button class="go" id="jSave">Enregistrer la journée</button>
+    <p class="note ok" id="jMsg" hidden></p>
+  </section>
+  <p class="note">Pèse-toi le matin à jeun, après être passé aux toilettes. Pour les pas, recopie le soir le total de Samsung Santé ou Google Fit.</p>
+  <section class="panel"><h2>Derniers jours</h2><ul class="hist" id="jList"></ul></section>
+</div>
+
+<div class="wrap withtabs" id="suivi" hidden>
+  <div class="head"><h1>Suivi</h1></div>
+  <section class="kpis" id="kpis"></section>
+  <section class="panel"><h2>Poids</h2><div id="wChart"></div><p class="note" id="wNote"></p></section>
+  <section class="panel"><h2>Pas · 14 derniers jours</h2><div id="sChart"></div></section>
+  <section class="panel"><h2>Analyse</h2><ul class="obs" id="obs"></ul></section>
+  <section class="panel"><h2>Par semaine</h2><div class="tblwrap"><table class="wk" id="wTable"></table></div></section>
+  <section class="panel">
+    <h2>Objectifs</h2>
+    <div class="f2">
+      <label class="fl">Poids de départ<input id="gStart" type="number" inputmode="decimal" step="0.1"></label>
+      <label class="fl">Objectif de pas<input id="gSteps" type="number" inputmode="numeric" step="500"></label>
+      <label class="fl">1er objectif<input id="gG1" type="number" inputmode="decimal" step="0.5"></label>
+      <label class="fl">2e objectif<input id="gG2" type="number" inputmode="decimal" step="0.5"></label>
+    </div>
+    <h2>Sauvegarde</h2>
+    <p class="note">Tes données restent sur ce téléphone. Exporte-les de temps en temps pour ne rien perdre si tu changes de téléphone.</p>
+    <div class="btnline"><button type="button" id="bExport">Exporter mes données</button><label for="fImport">Importer…</label><input type="file" id="fImport" accept="application/json,.json" hidden></div>
+    <p class="note ok" id="ioMsg" hidden></p>
+  </section>
+</div>
+
+<nav class="tabs" id="tabs" aria-label="Sections">
+  <button type="button" data-v="home" aria-current="page">Séance</button>
+  <button type="button" data-v="journal">Journal</button>
+  <button type="button" data-v="suivi">Suivi</button>
+</nav>
 
 <div class="sheet" id="sheet" hidden>
   <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="sheetName">
@@ -341,7 +426,7 @@ function start(){
   try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();actx.resume&&actx.resume()}catch(e){}
   try{navigator.wakeLock&&navigator.wakeLock.request("screen").then(l=>wake=l).catch(()=>{})}catch(e){}
   steps=build();si=0;totalMs=0;paused=false;
-  $("home").hidden=true;$("run").hidden=false;
+  $("home").hidden=true;$("tabs").hidden=true;$("run").hidden=false;
   say(`C'est parti. Séance ${cfg.sess}, semaine ${cfg.week}, ${tours()} tours.`,true);
   enter(0);last=performance.now();clearInterval(timer);timer=setInterval(tick,100);micStart();
 }
@@ -420,7 +505,7 @@ function finish(){
   const b=document.createElement("button");b.className="go";b.textContent="Retour";b.style.marginTop="12px";b.onclick=closeRun;$("rMid").appendChild(b);b.id="bBack";
   micStop();release();
 }
-function closeRun(){micStop();if(runFig){runFig.stop();runFig=null}runFigName=null;$("rFig").hidden=true;clearInterval(timer);timer=null;st=null;try{speechSynthesis.cancel()}catch(e){}release();const b=$("bBack");if(b)b.remove();$("rBot").hidden=false;$("run").hidden=true;$("home").hidden=false;renderHome();window.scrollTo(0,0)}
+function closeRun(){micStop();if(runFig){runFig.stop();runFig=null}runFigName=null;$("rFig").hidden=true;clearInterval(timer);timer=null;st=null;try{speechSynthesis.cancel()}catch(e){}release();const b=$("bBack");if(b)b.remove();$("rBot").hidden=false;$("run").hidden=true;$("home").hidden=false;$("tabs").hidden=false;renderHome();window.scrollTo(0,0)}
 function release(){try{wake&&wake.release()}catch(e){}wake=null}
 $("btnGo").onclick=start;
 $("bPause").onclick=()=>{paused=!paused;if(paused){try{speechSynthesis.cancel()}catch(e){}say("Pause.")}else say("On reprend.");render()};
@@ -430,6 +515,130 @@ let stopArm=0;
 $("bStop").onclick=()=>{const now=Date.now();if(now-stopArm<3000){closeRun();stopArm=0;$("bStop").textContent="Arrêter la séance"}else{stopArm=now;$("bStop").textContent="Appuie encore pour arrêter";setTimeout(()=>{$("bStop").textContent="Arrêter la séance"},3000)}};
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&timer&&!wake){try{navigator.wakeLock&&navigator.wakeLock.request("screen").then(l=>wake=l).catch(()=>{})}catch(e){}}});
 renderHome();
+/* ---------- Journal & suivi ---------- */
+const TAGS=["Alcool","Plat commandé","Grignotage","Repas riche","Resto"];
+const PLAN=["Dans le plan","Petit écart","Gros écart"];
+let journal=store.get("cpc_journal",{});
+let goals=Object.assign({start:95,g1:85,g2:80,steps:7000},store.get("cpc_goals",{}));
+const iso=d=>{const x=new Date(d);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0")};
+const parse=k=>{const [y,m,d]=k.split("-").map(Number);return new Date(y,m-1,d)};
+const DAY=864e5,nf=(v,d=1)=>v.toLocaleString("fr-FR",{minimumFractionDigits:d,maximumFractionDigits:d});
+const dShort=k=>parse(k).toLocaleDateString("fr-FR",{day:"numeric",month:"short"});
+let jDay=iso(new Date()),jPlan=null,jTags=[];
+function sessOn(k){return hist.filter(h=>iso(new Date(h.d))===k)}
+function loadDay(){
+  const e=journal[jDay]||{};
+  $("jDate").value=jDay;$("jW").value=e.w!=null?e.w:"";$("jSt").value=e.st!=null?e.st:"";$("jNote").value=e.note||"";
+  jPlan=e.plan!=null?e.plan:null;jTags=(e.tags||[]).slice();
+  seg($("jPlan"),PLAN.map((l,i)=>[i,l]),jPlan,v=>{jPlan=jPlan===+v?null:+v;loadSeg()});
+  loadSeg();
+  const ss=sessOn(jDay);$("jSess").textContent=ss.length?"Séance faite ce jour : "+ss.map(h=>h.s).join(", ")+".":"Pas de séance enregistrée ce jour.";
+  $("jMsg").hidden=true;$("jNext").disabled=jDay>=iso(new Date());
+}
+function loadSeg(){
+  seg($("jPlan"),PLAN.map((l,i)=>[i,l]),jPlan,v=>{jPlan=jPlan===+v?null:+v;loadSeg()});
+  const el=$("jTags");el.innerHTML="";TAGS.forEach(t=>{const b=document.createElement("button");b.type="button";b.textContent=t;b.setAttribute("aria-pressed",String(jTags.includes(t)));b.onclick=()=>{jTags=jTags.includes(t)?jTags.filter(x=>x!==t):[...jTags,t];loadSeg()};el.appendChild(b)});
+}
+function saveDay(){
+  const w=parseFloat(String($("jW").value).replace(",",".")),st=parseInt($("jSt").value,10),note=$("jNote").value.trim();
+  if($("jW").value!==""&&(!(w>=40&&w<=200))){$("jMsg").textContent="Le poids doit être entre 40 et 200 kg.";$("jMsg").hidden=false;return}
+  const e={};if(w>=40)e.w=Math.round(w*10)/10;if(st>=0)e.st=st;if(jPlan!=null)e.plan=jPlan;if(jTags.length)e.tags=jTags;if(note)e.note=note;
+  if(Object.keys(e).length)journal[jDay]=e;else delete journal[jDay];
+  store.set("cpc_journal",journal);$("jMsg").textContent="Journée du "+dShort(jDay)+" enregistrée.";$("jMsg").hidden=false;renderJList();
+}
+function renderJList(){
+  const ks=Object.keys(journal).sort().reverse().slice(0,14);
+  $("jList").innerHTML=ks.length?ks.map(k=>{const e=journal[k];const bits=[];if(e.w!=null)bits.push(nf(e.w)+" kg");if(e.st!=null)bits.push(e.st.toLocaleString("fr-FR")+" pas");if(e.plan!=null)bits.push(PLAN[e.plan].toLowerCase());if(e.tags)bits.push(e.tags.join(", ").toLowerCase());
+    return `<li data-k="${k}" style="cursor:pointer"><span>${parse(k).toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"})}</span><span style="text-align:right">${bits.join(" · ")}</span></li>`}).join(""):`<p class="empty">Rien d'enregistré pour l'instant. Commence par ton poids de ce matin.</p>`;
+  $("jList").querySelectorAll("li").forEach(li=>li.onclick=()=>{jDay=li.dataset.k;loadDay();window.scrollTo(0,0)});
+}
+$("jDate").onchange=e=>{if(e.target.value){jDay=e.target.value>iso(new Date())?iso(new Date()):e.target.value;loadDay()}};
+$("jPrev").onclick=()=>{jDay=iso(parse(jDay).getTime()-DAY+DAY/2);loadDay()};
+$("jNext").onclick=()=>{const n=iso(parse(jDay).getTime()+DAY*1.5);if(n<=iso(new Date())){jDay=n;loadDay()}};
+$("jSave").onclick=saveDay;
+
+function weighIns(){return Object.keys(journal).filter(k=>journal[k].w!=null).sort().map(k=>({k,t:parse(k).getTime(),w:journal[k].w}))}
+function regress(pts){const n=pts.length;if(n<2)return null;const mx=pts.reduce((a,p)=>a+p.t,0)/n,my=pts.reduce((a,p)=>a+p.w,0)/n;let num=0,den=0;pts.forEach(p=>{num+=(p.t-mx)*(p.w-my);den+=(p.t-mx)**2});if(!den)return null;const b=num/den;return{b,a:my-b*mx,perWeek:b*7*DAY}}
+function svgEl(w,h,inner){return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img">${inner}</svg>`}
+function renderSuivi(){
+  const pts=weighIns(),last=pts[pts.length-1];
+  const recent=last?pts.filter(p=>p.t>=last.t-28*DAY):[];const rg=regress(recent.length>=2?recent:pts);
+  const lost=last?goals.start-last.w:0;
+  let paceTxt="—",paceSub="2 pesées minimum";
+  if(rg){paceTxt=(rg.perWeek<=0?"−":"+")+nf(Math.abs(rg.perWeek));paceSub="kg / semaine"}
+  $("kpis").innerHTML=`<div class="kpi"><div class="v">${last?nf(last.w):"—"}</div><div class="k">Poids</div><div class="s">${last?dShort(last.k):"pas encore pesé"}</div></div>
+   <div class="kpi"><div class="v">${last?(lost>=0?"−":"+")+nf(Math.abs(lost)):"—"}</div><div class="k">Depuis le départ</div><div class="s">départ ${nf(goals.start)} kg</div></div>
+   <div class="kpi"><div class="v">${paceTxt}</div><div class="k">Rythme</div><div class="s">${paceSub}</div></div>`;
+  // weight chart
+  const W=340,H=200,L=30,R=34,T=10,B=22;
+  if(!pts.length){$("wChart").innerHTML=`<p class="empty">Ta courbe apparaîtra dès ta première pesée, à saisir dans le Journal.</p>`;$("wNote").textContent=""}
+  else{
+    const t0=pts[0].t,t1=Math.max(last.t,t0+14*DAY);
+    const ws=pts.map(p=>p.w).concat([goals.g1]);let y0=Math.floor(Math.min(...ws)-1),y1=Math.ceil(Math.max(...ws,goals.start>last.w+6?last.w:goals.start)+0.5);
+    if(y1-y0<4)y1=y0+4;
+    const X=t=>L+(t-t0)/(t1-t0)*(W-L-R),Y=v=>T+(y1-v)/(y1-y0)*(H-T-B);
+    const step=(y1-y0)>12?2:1;let g="";
+    for(let v=y0;v<=y1;v+=step)g+=`<line class="grid" x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${L-5}" y="${Y(v)+3}" text-anchor="end">${v}</text>`;
+    [goals.g1,goals.g2].forEach(v=>{if(v>=y0&&v<=y1)g+=`<line class="goal" x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="goaltx" x="${W-R+4}" y="${Y(v)+3}">${nf(v,v%1?1:0)}</text>`});
+    if(rg&&recent.length>=2){const ta=recent[0].t,tb=t1;g+=`<line class="tr" x1="${X(ta)}" y1="${Y(rg.a+rg.b*ta)}" x2="${X(tb)}" y2="${Y(rg.a+rg.b*tb)}"/>`}
+    g+=`<path class="wl" d="${pts.map((p,i)=>(i?"L":"M")+X(p.t).toFixed(1)+" "+Y(p.w).toFixed(1)).join("")}"/>`;
+    g+=pts.map((p,i)=>`<circle class="wd" cx="${X(p.t).toFixed(1)}" cy="${Y(p.w).toFixed(1)}" r="${i===pts.length-1?4:2.6}"/>`).join("");
+    g+=`<text x="${X(last.t)}" y="${Y(last.w)-8}" text-anchor="middle" style="fill:var(--ink)">${nf(last.w)}</text>`;
+    g+=`<text x="${L}" y="${H-6}">${dShort(pts[0].k)}</text><text x="${W-R}" y="${H-6}" text-anchor="end">${dShort(iso(t1))}</text>`;
+    $("wChart").innerHTML=svgEl(W,H,g);
+    $("wNote").textContent=rg&&recent.length>=2?"Pointillé noir : ta tendance sur les 4 dernières semaines. Lignes vertes : tes objectifs.":"Lignes vertes : tes objectifs.";
+  }
+  // steps chart
+  {const W2=340,H2=130,L2=30,B2=20,T2=8,today=new Date();const days=[];for(let i=13;i>=0;i--){const k=iso(today.getTime()-i*DAY);days.push({k,v:journal[k]&&journal[k].st!=null?journal[k].st:null})}
+   const mx=Math.max(goals.steps*1.25,...days.map(d=>d.v||0)),bw=(W2-L2-6)/14,Y=v=>T2+(1-v/mx)*(H2-T2-B2);let g="";
+   [0,Math.round(mx/2/1000)*1000].forEach(v=>g+=`<line class="grid" x1="${L2}" x2="${W2-4}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${L2-5}" y="${Y(v)+3}" text-anchor="end">${v?Math.round(v/1000)+"k":"0"}</text>`);
+   days.forEach((d,i)=>{const x=L2+i*bw+2;if(d.v!=null)g+=`<rect class="bar${d.v<goals.steps?" low":""}" x="${x.toFixed(1)}" y="${Y(d.v).toFixed(1)}" width="${(bw-4).toFixed(1)}" height="${(Y(0)-Y(d.v)).toFixed(1)}" rx="2"/>`;
+     g+=`<text x="${(x+(bw-4)/2).toFixed(1)}" y="${H2-6}" text-anchor="middle">${"DLMMJVS"[parse(d.k).getDay()]}</text>`});
+   g+=`<line class="goal" x1="${L2}" x2="${W2-4}" y1="${Y(goals.steps)}" y2="${Y(goals.steps)}"/><text class="goaltx" x="${W2-6}" y="${Y(goals.steps)-4}" text-anchor="end">objectif ${goals.steps.toLocaleString("fr-FR")}</text>`;
+   $("sChart").innerHTML=days.some(d=>d.v!=null)?svgEl(W2,H2,g):`<p class="empty">Saisis tes pas le soir dans le Journal pour voir tes 14 derniers jours ici.</p>`}
+  // weekly table
+  const wk={};const add=k=>{const m=weekKey(parse(k));return wk[m]=wk[m]||{m:new Date(m),ws:[],st:[],plan:0,ecart:0,tags:{},sess:0}};
+  Object.keys(journal).forEach(k=>{const e=journal[k],o=add(k);if(e.w!=null)o.ws.push(e.w);if(e.st!=null)o.st.push(e.st);if(e.plan===0)o.plan++;if(e.plan>0)o.ecart++;(e.tags||[]).forEach(t=>o.tags[t]=(o.tags[t]||0)+1)});
+  hist.forEach(h=>{add(iso(new Date(h.d))).sess++});
+  const rows=Object.values(wk).sort((a,b)=>a.m-b.m);let prev=null;
+  rows.forEach(o=>{o.avg=o.ws.length?o.ws.reduce((a,b)=>a+b,0)/o.ws.length:null;o.delta=(o.avg!=null&&prev&&prev.avg!=null)?o.avg-prev.avg:null;o.stAvg=o.st.length?o.st.reduce((a,b)=>a+b,0)/o.st.length:null;if(o.avg!=null)prev=o});
+  $("wTable").innerHTML=rows.length?`<thead><tr><th>Semaine du</th><th>Poids moy.</th><th>Écart</th><th>Séances</th><th>Pas moy.</th><th>Jours plan</th><th>Écarts</th></tr></thead><tbody>${rows.slice().reverse().map(o=>`<tr><td>${o.m.toLocaleDateString("fr-FR",{day:"numeric",month:"short"})}</td><td>${o.avg!=null?nf(o.avg):"—"}</td><td class="${o.delta==null?"":o.delta<0?"dn":"up"}">${o.delta==null?"—":(o.delta<0?"−":"+")+nf(Math.abs(o.delta))}</td><td>${o.sess}/3</td><td>${o.stAvg!=null?Math.round(o.stAvg).toLocaleString("fr-FR"):"—"}</td><td>${o.plan}</td><td>${o.ecart}</td></tr>`).join("")}</tbody>`:`<tbody><tr><td class="empty">Les semaines apparaîtront ici au fil de tes saisies.</td></tr></tbody>`;
+  // observations
+  const obs=[];
+  if(pts.length<2)obs.push("Pèse-toi au moins deux fois pour voir ta tendance. Une à deux pesées par semaine suffisent.");
+  if(rg&&last){
+    const pw=-rg.perWeek;
+    if(pts.length>=2&&last.t-pts[0].t<14*DAY&&pw>0.8)obs.push("Perte rapide au début : c'est surtout de l'eau, le rythme va se stabiliser vers 0,5 à 0,7 kg par semaine.");
+    else if(pw>1)obs.push(`Tu perds ${nf(pw)} kg par semaine : c'est plus rapide que prévu. Ajoute une collation pour préserver ton muscle.`);
+    else if(pw>=0.4)obs.push(`Rythme de ${nf(pw)} kg par semaine : tu es dans la cible. Continue comme ça.`);
+    else if(recent.length>=3&&last.t-recent[0].t>=14*DAY)obs.push(`Rythme de ${nf(Math.max(pw,0))} kg par semaine sur les dernières semaines : ça ralentit. Regarde les écarts et les pas dans le tableau, ou retire 150 kcal par jour.`);
+    [goals.g1,goals.g2].forEach(g=>{if(last.w>g&&pw>0.1){const d=new Date(last.t+(last.w-g)/(pw/7)*DAY);obs.push(`À ce rythme, ${nf(g,g%1?1:0)} kg vers ${d.toLocaleDateString("fr-FR",{month:"long",year:"numeric"})}.`)}else if(last.w<=g)obs.push(`Objectif ${nf(g,g%1?1:0)} kg atteint. Bravo.`)});
+  }
+  const dw=rows.filter(o=>o.delta!=null);
+  const cmp=(label,test)=>{const a=dw.filter(test),b=dw.filter(o=>!test(o));if(a.length&&b.length){const ma=a.reduce((x,o)=>x+o.delta,0)/a.length,mb=b.reduce((x,o)=>x+o.delta,0)/b.length;obs.push(`${label} : ${(ma<0?"−":"+")+nf(Math.abs(ma))} kg en moyenne, contre ${(mb<0?"−":"+")+nf(Math.abs(mb))} kg les autres semaines (${a.length} et ${b.length} semaines).`)}};
+  if(dw.length>=3){
+    cmp("Semaines avec au moins 5 jours dans le plan",o=>o.plan>=5);
+    cmp("Semaines avec de l'alcool 2 fois ou plus",o=>(o.tags["Alcool"]||0)>=2);
+    cmp("Semaines avec un plat commandé ou un resto 2 fois ou plus",o=>(o.tags["Plat commandé"]||0)+(o.tags["Resto"]||0)>=2);
+    cmp(`Semaines à ${goals.steps.toLocaleString("fr-FR")} pas par jour ou plus`,o=>o.stAvg!=null&&o.stAvg>=goals.steps);
+    cmp("Semaines avec les 3 séances",o=>o.sess>=3);
+  }else obs.push("Les comparaisons entre tes semaines (écarts, alcool, pas, séances) apparaîtront après 3 semaines de pesées.");
+  obs.push("Le poids varie de 0,5 à 1 kg d'un jour à l'autre (eau, sel, repas de la veille) : fie-toi à la tendance, pas à une pesée isolée.");
+  $("obs").innerHTML=obs.map(o=>`<li>${o}</li>`).join("");
+  ["Start","Steps","G1","G2"].forEach(k=>{const el=$("g"+k),key=k==="Start"?"start":k==="Steps"?"steps":k.toLowerCase();if(document.activeElement!==el)el.value=goals[key]});
+}
+[["gStart","start"],["gSteps","steps"],["gG1","g1"],["gG2","g2"]].forEach(([id,key])=>$(id).onchange=e=>{const v=parseFloat(String(e.target.value).replace(",","."));if(v>0){goals[key]=key==="steps"?Math.round(v):v;store.set("cpc_goals",goals);renderSuivi()}});
+$("bExport").onclick=()=>{const data={app:"circuit",v:1,exporte:new Date().toISOString(),journal,hist,goals};const b=new Blob([JSON.stringify(data,null,1)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="circuit-sauvegarde-"+iso(new Date())+".json";document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);$("ioMsg").textContent="Fichier de sauvegarde créé.";$("ioMsg").hidden=false};
+$("fImport").onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const d=JSON.parse(rd.result);if(d.app!=="circuit")throw 0;journal=Object.assign({},journal,d.journal||{});const seen=new Set(hist.map(h=>h.d));(d.hist||[]).forEach(h=>{if(!seen.has(h.d))hist.push(h)});hist.sort((a,b)=>b.d.localeCompare(a.d));if(d.goals)goals=Object.assign(goals,d.goals);store.set("cpc_journal",journal);store.set("cpc_hist",hist);store.set("cpc_goals",goals);$("ioMsg").textContent="Données importées.";$("ioMsg").hidden=false;renderSuivi();renderHome()}catch(err){$("ioMsg").textContent="Ce fichier n'est pas une sauvegarde de l'appli.";$("ioMsg").hidden=false}};rd.readAsText(f);e.target.value=""};
+
+/* ---------- Navigation ---------- */
+const VIEWS=["home","journal","suivi"];
+function show(v){if(!VIEWS.includes(v))v="home";VIEWS.forEach(x=>$(x).hidden=x!==v);document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-current",b.dataset.v===v?"page":"false"));
+  if(v==="journal"){jDay=iso(new Date());loadDay();renderJList()}if(v==="suivi")renderSuivi();if(v==="home")renderHome();window.scrollTo(0,0)}
+document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{const h=b.dataset.v==="home"?"":"#"+b.dataset.v;if(location.hash!==h){history.replaceState(null,"",location.pathname+h)}show(b.dataset.v)});
+window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
+show(location.hash.slice(1));
+
 /* ---------- PWA ---------- */
 if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
 let deferredInstall=null;
